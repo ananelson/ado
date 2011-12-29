@@ -1,0 +1,4 @@
+{
+    "*.tex|adojinja|latex" :  { "allinputs" : true },
+    "ado-source.py|fn|py" : {}
+}
