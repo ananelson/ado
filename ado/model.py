@@ -159,8 +159,20 @@ class Model(object):
     def elapsed_seconds(self):
         return self.elapsed().total_seconds()
 
+    def elapsed_minutes(self):
+        return int(self.elapsed_seconds() / 60)
+
+    def elapsed_hours(self):
+        return int(self.elapsed_seconds() / 3600)
+
     def elapsed_days(self):
-        return int(self.elapsed_seconds() / (60*60*24))
+        return self.elapsed().days
+
+    def elapsed_time(self):
+        elapsed = self.elapsed()
+        hours = int(elapsed.seconds/3600)
+        minutes = int((elapsed.seconds - hours*3600)/60)
+        return "%s:%s:%s" % (elapsed.days, hours, minutes)
 
     @classmethod
     def delete(klass, conn, rowid):

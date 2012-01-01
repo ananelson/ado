@@ -13,7 +13,8 @@ class Task(Model):
         "description" : "text",
         "due_at" : "timestamp",
         "name" : "text",
-        "project_id" : "integer"
+        "project_id" : "integer",
+        "worktype" : "text"
     }
 
     SEARCH_FIELDS = ["name", "description", "context"]

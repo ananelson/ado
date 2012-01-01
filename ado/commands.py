@@ -2,6 +2,7 @@ from ado.model import Model
 from ado.note import Note
 from ado.project import Project
 from ado.task import Task
+from ado.time import Time
 from datetime import datetime
 from modargs import args
 import os
@@ -11,10 +12,16 @@ import sys
 
 ADO_DB_FILE = "ado.sqlite3"
 ADO_DIR = os.path.expanduser("~/.ado")
-CLASSES = [Project, Task, Note]
+CLASSES = [Project, Task, Note, Time]
 DEFAULT_COMMAND = 'listp'
 MOD = sys.modules[__name__]
 PROG = 'ado'
+WORKTYPES = [
+    "adhoc",
+    "billable",
+    "capital",
+    "maintenance"
+    ]
 
 def available_commands():
     return args.available_commands(MOD)
@@ -174,7 +181,7 @@ def projects_command():
     if len(projects) == 0:
         print "No projects found."
 
-def task_command(name=None, context=None, p=-1, description="", due=-1):
+def task_command(name=None, context=None, p=-1, description="", due=-1, worktype="adhoc"):
     """
     Create a new task.
     """
@@ -187,12 +194,16 @@ def task_command(name=None, context=None, p=-1, description="", due=-1):
     else:
         due_at = None
 
+    if not worktype in WORKTYPES:
+        raise Exception("Acceptable worktypes are %s" % ", ".join(WORKTYPES))
+
     task = Task.create(
         conn(),
         due_at=due_at,
         name=name,
         context=context,
         description=description,
+        worktype=worktype,
         created_at = datetime.now()
     )
     print "Created task", task.id
@@ -330,3 +341,56 @@ def complete_command(p=-1,t=-1):
         print "Task %s marked as complete!" % t
     else:
         raise Exception()
+
+def time_command(t=-1, description=""):
+    """
+    Starts a timer, optionally give a description and specify the task id you are working on.
+    """
+    c = conn()
+    active_timers = Time.active_timers(c)
+    if len(active_timers) > 0:
+        # List the existing timer(s) and show elapsed times
+        for timer in active_timers:
+            if timer.description:
+                description = timer.description
+            else:
+                description = ""
+
+            if timer.task_id:
+                task_id = "Task %4d." % timer.task_id
+            else:
+                task_id = "No task assigned."
+            print "Timer %04d.    %s   %s %s" % (timer.id, timer.elapsed_time(), task_id, description)
+    else:
+        # Create a new timer.
+        if t > 0:
+            task_id = t
+        else:
+            task_id = None
+
+        if len(description) == 0:
+            description = None
+
+        if not description and not task_id:
+            print "No active timers. To create a new timer please specify either a description or a task id."
+        else:
+            time = Time.create(
+                c,
+                task_id=task_id,
+                description=description,
+                started_at = datetime.now()
+            )
+            print "Timer %s Started" % time.id
+
+def stop_command(timer=-1):
+    c = conn()
+    if timer > 0:
+        # stop the particular timer specified
+        timers = [ timer.id ]
+    else:
+        # stop all timers (there's probably just 1)
+        timers = Time.active_timers(c)
+
+    for timer in timers:
+        Time.stop(c, timer.id)
+        print "Stopped timer %04d total time %s" % (timer.id, timer.elapsed_time())
