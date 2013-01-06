@@ -1,0 +1,6 @@
+docs.tex|adojinja|latex:
+    - packages.txt|pydoc:
+        - contents: 'ado'
+    - .sh|idio|shint|pyg|l
+    - .sh|pyg|l
+    - .tex|pyg|l

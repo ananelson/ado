@@ -8,7 +8,7 @@
 \usepackage{hyperref}
 
 \usepackage{fancyvrb}
-\fvset{fontsize=\small}
+\fvset{fontsize=\tiny}
 
 << pygments['pastie.tex'] >>
 
@@ -17,23 +17,28 @@
 
 \begin{document}
 
-\section{Examples}
+\section{Comprehensive Example}
 
 Ado is a simple command-line todo system. Ado lets you create notes,
-projects and tasks. Ado uses a sqlite file to store data. By default, this
-sqlite file is named << d['/source.json']['ado.commands.ADO_DB_FILE'] >>
-and is stored in a \verb|.ado| directory in the user's home directory, e.g.
-<< d['/source.json']['ado.commands.ADO_DIR'] >>
+projects and tasks, and organize them into portfolios corresponding to
+the different areas of responsibility in your life. Ado also lets you track the
+time you spend on tasks so you can better understand your commitments and
+manage your time better. Because ado uses Dexy as its reporting engine, you can
+create powerful reports (or use the defaults) to really understand and plan how
+you spend your productive time.
+
+Ado uses a sqlite file to store data. By default, this sqlite file is named << d['/packages.txt|pydoc']['ado.commands.ADO_DB_FILE:value'] >> and is stored in a \verb|.ado| directory in the user's home directory, e.g.
+<< d['/packages.txt|pydoc']['ado.commands.ADO_DIR:value'] >>
 
 You can override either of these locations by setting environment constants:
-<< d['examples.sh|fn|idio|shint|pyg|l']['set-ado-dir'] >>
+<< d['examples.sh|idio|shint|pyg|l']['set-ado-dir'] >>
 
-The \verb|setup| command creates the \verb|ADO_DIR| directory (if necessary)
+The \hyperref[subsec:commands:setup]{ \verb|setup } command creates the \verb|ADO_DIR| directory (if necessary)
 and creates the tables in the database:
-<< d['examples.sh|fn|idio|shint|pyg|l']['setup'] >>
+<< d['examples.sh|idio|shint|pyg|l']['setup'] >>
 
 You can check that this has worked by using the \verb|sqlite3| command directly:
-<< d['examples.sh|fn|idio|shint|pyg|l']['sqlite-dump'] >>
+<< d['examples.sh|idio|shint|pyg|l']['sqlite-dump'] >>
 
 To manage your todo items, you can create notes, tasks and projects.
 
@@ -42,57 +47,57 @@ To manage your todo items, you can create notes, tasks and projects.
 A note can stand alone, or it can be assigned to a task or a project. Create
 notes by using the \verb|note| command.
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['create-note'] >>
+<< d['examples.sh|idio|shint|pyg|l']['create-note'] >>
 
 Each note is assigned an ID number, which is printed to STDOUT when the note is
 created. You can list notes with the \verb|notes| command.
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['list-notes'] >>
+<< d['examples.sh|idio|shint|pyg|l']['list-notes'] >>
 
 This displays the note id, the first 30 characters of the note, and how old the
 note is (in days). You can use the \verb|show| command to show the full text of
 a note:
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['show-note'] >>
+<< d['examples.sh|idio|shint|pyg|l']['show-note'] >>
 
 Notes can be deleted using the \verb|delete| command, which removes them from the database:
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['delete-note'] >>
+<< d['examples.sh|idio|shint|pyg|l']['delete-note'] >>
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['list-notes-again'] >>
+<< d['examples.sh|idio|shint|pyg|l']['list-notes-again'] >>
 
 You can also use the \verb|archive| command which keeps the content in the
 database, but removes it from lists and reports.
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['archive-note'] >>
+<< d['examples.sh|idio|shint|pyg|l']['archive-note'] >>
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['list-notes-yet-again'] >>
+<< d['examples.sh|idio|shint|pyg|l']['list-notes-yet-again'] >>
 
 \subsection{Tasks}
 
 Tasks have a name and a context, and an optional description.
 
 Create a task:
-<< d['examples.sh|fn|idio|shint|pyg|l']['create-task'] >>
+<< d['examples.sh|idio|shint|pyg|l']['create-task'] >>
 
 And to list all tasks:
-<< d['examples.sh|fn|idio|shint|pyg|l']['list-tasks'] >>
+<< d['examples.sh|idio|shint|pyg|l']['list-tasks'] >>
 
 To show detail on a specific task:
-<< d['examples.sh|fn|idio|shint|pyg|l']['show-task'] >>
+<< d['examples.sh|idio|shint|pyg|l']['show-task'] >>
 
 When you have finished a task, you can mark it as complete:
-<< d['examples.sh|fn|idio|shint|pyg|l']['complete-task'] >>
+<< d['examples.sh|idio|shint|pyg|l']['complete-task'] >>
 
 \subsection{Projects}
 
 To create a new project:
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['create-project'] >>
+<< d['examples.sh|idio|shint|pyg|l']['create-project'] >>
 
 To list all projects:
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['projects'] >>
+<< d['examples.sh|idio|shint|pyg|l']['projects'] >>
 
 \subsection{Notes with Projects and Tasks}
 
@@ -103,20 +108,20 @@ You can pass a project or task id when creating a new note, use \verb|-p| to
 pass a project id and \verb|-t| to pass a task id, the new note will be
 assigned to the project or task in question.
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['create-note-in-project'] >>
+<< d['examples.sh|idio|shint|pyg|l']['create-note-in-project'] >>
 
 When you show the project, you see that the note is linked to it:
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['show-project'] >>
+<< d['examples.sh|idio|shint|pyg|l']['show-project'] >>
 
 You can also use the \verb|assign| command to assign a note to a project or task:
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['create-task-for-note'] >>
+<< d['examples.sh|idio|shint|pyg|l']['create-task-for-note'] >>
 
 Let's change the note's content to reflect the fact that it is now a part of a
 task rather than a project, using the \verb|update| command:
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['update-note'] >>
+<< d['examples.sh|idio|shint|pyg|l']['update-note'] >>
 
 You can use the update command to change any attribute of a note, project or task.
 
@@ -127,7 +132,7 @@ This section talks about how these elements work together for a GTD-style workfl
 The \verb|inbox| command lists all tasks that aren't assigned to a project, and
 all notes that aren't assigned to a project or a task:
 
-<< d['examples.sh|fn|idio|shint|pyg|l']['inbox'] >>
+<< d['examples.sh|idio|shint|pyg|l']['inbox'] >>
 
 To process this 'inbox', the \verb|assign| command is used to assign notes to
 tasks and projects, or tasks to projects. Use the \verb|complete| command to

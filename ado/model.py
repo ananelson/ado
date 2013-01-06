@@ -106,6 +106,7 @@ class Model(object):
         cursor = o.persist(conn)
         o.id = cursor.lastrowid
         conn.commit()
+        o.conn = conn
         return o
 
     @classmethod

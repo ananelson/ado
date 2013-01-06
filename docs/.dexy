@@ -1,5 +1,0 @@
-{
-    "*.sh|fn|idio|shint|pyg|l" : {},
-    "*.sh|pyg|l" : {},
-    "*.tex|pyg|l" : {}
-}

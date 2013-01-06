@@ -1,41 +1,109 @@
-from ado.model import Model
+import ado.model
+import ado.task
+import ado.note
 from datetime import datetime
-import sqlite3
 
-class Project(Model):
+class Project(ado.model.Model):
     FIELDS = {
         "archived_at" : "timestamp",
         "completed_at" : "timestamp",
         "created_at" : "timestamp",
         "description" : "text",
         "due_at" : "timestamp",
-        "name" : "text"
+        "name" : "text",
+        "parent_project_id" : "integer",
+        "portfolio_id" : "integer"
     }
 
     SEARCH_FIELDS = ["name", "description"]
 
-    def notes(self, conn=None):
-        from ado.note import Note
+    @classmethod
+    def all_nested_subprojects(klass, conn):
+        projects = []
+
+        sql = "select * from %s where parent_project_id IS NULL" % klass.table_name()
+
+        def append_self_and_children(project):
+            projects.append(project)
+            sql = "select * from %s where parent_project_id = ?" % klass.table_name()
+            for row in conn.execute(sql, [project.id]):
+                child_project = klass.load(conn, row)
+                append_self_and_children(child_project)
+
+        for row in conn.execute(sql):
+            parent_project = klass.load(conn, row)
+            append_self_and_children(parent_project)
+
+        return projects
+
+    def create_subproject(self, name, description=None, conn=None):
+        """
+        Create a subproject of this project.
+        """
         if not conn:
             conn = self.conn
 
-        sql = "select * from %s where linked_to_type = 'Project' and linked_to_id = %s" % (Note.table_name(), self.id)
-        return [Note.load(conn, row) for row in conn.execute(sql)]
+        subproject = Project.create(
+                conn,
+                created_at = datetime.now(),
+                description = description,
+                parent_project_id = self.id,
+                name=name,
+                portfolio_id = self.portfolio_id
+                )
+
+        return subproject
+
+    def create_task(self, name, context, description=None, due_at=None, estimate=None, worktype=None, conn=None):
+        """
+        Create a task for this project.
+        """
+        if not conn:
+            conn = self.conn
+
+        task = ado.task.Task.create(
+                conn,
+                due_at=due_at,
+                name=name,
+                context=context,
+                description=description,
+                estimate=estimate,
+                project_id=self.id,
+                worktype=worktype,
+                created_at = datetime.now()
+                )
+
+        return task
+
+    def notes(self, conn=None):
+        if not conn:
+            conn = self.conn
+
+        sql = "select * from %s where linked_to_type = 'Project' and linked_to_id = %s" % (ado.note.Note.table_name(), self.id)
+        return [ado.note.Note.load(conn, row) for row in conn.execute(sql)]
 
     def tasks(self, conn=None):
-        from ado.task import Task
         if not conn:
             conn = self.conn
 
-        sql = "select * from %s where project_id = %s" % (Task.table_name(), self.id)
-        return [Task.load(conn, row) for row in conn.execute(sql)]
+        sql = "select * from %s where project_id = %s" % (ado.task.Task.table_name(), self.id)
+        return [ado.task.Task.load(conn, row) for row in conn.execute(sql)]
 
     def display_line(self):
         if self.due_at:
             due_at = " (due in %0d days)" % self.days_until_due()
         else:
             due_at = ""
-        return "Project %04d. %-30s (%d days old)%s" % (self.id, self.name, self.elapsed_days(), due_at)
+
+        if self.parent_project_id:
+            parent_project_description = ", subproject of %s" % self.parent_project_id
+        else:
+            parent_project_description = ""
+
+        spaces = "  " * self.indent()
+        indented_start = spaces + "Project %04d" % self.id
+
+        return "%-20s %-40s (in %s%s)%s" % (indented_start, self.name, self.portfolio().name, parent_project_description, due_at)
 
     def validate_complete(self, conn):
         return (len(self.tasks()) == 0)
@@ -52,3 +120,21 @@ class Project(Model):
         for note in notes:
             show_text.append(note.display_line())
         return "\n".join(show_text)
+
+    def portfolio(self, conn=None):
+        from ado.portfolio import Portfolio
+        if not conn:
+            conn = self.conn
+        return Portfolio.get(conn, self.portfolio_id)
+
+    def parent_project(self, conn):
+        return Project.get(conn, self.parent_project_id)
+
+    def indent(self, conn=None):
+        if not conn:
+            conn = self.conn
+        if not self.parent_project_id:
+            return 0
+        else:
+            return 1 + self.parent_project(conn).indent()
+

@@ -1,7 +1,7 @@
 from ado.model import Model
 from datetime import datetime
 
-class Time(Model):
+class Timer(Model):
     FIELDS = {
         "task_id" : "integer",
         "started_at" : "timestamp",

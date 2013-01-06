@@ -1,8 +1,12 @@
 from ado.model import Model
 from ado.note import Note
+from ado.portfolio import Portfolio
 from ado.project import Project
+from ado.recipe import Recipe
 from ado.task import Task
-from ado.time import Time
+from ado.timer import Timer
+from ado.metric import Metric
+from ado.metric_data import MetricData
 from datetime import datetime
 from modargs import args
 import os
@@ -12,10 +16,11 @@ import sys
 
 ADO_DB_FILE = "ado.sqlite3"
 ADO_DIR = os.path.expanduser("~/.ado")
-CLASSES = [Project, Task, Note, Time]
+CLASSES = [Portfolio, Project, Task, Note, Timer, Recipe, Metric, MetricData]
 DEFAULT_COMMAND = 'listp'
 MOD = sys.modules[__name__]
 PROG = 'ado'
+ENFORCE_WORKTYPES = True # set to false if you don't care about worktypes/recipes
 WORKTYPES = [
     "adhoc",
     "billable",
@@ -128,7 +133,7 @@ def notes_command():
     if len(notes) == 0:
         print "No notes found."
 
-def update_command(t=-1,p=-1,n=-1, **kwargs):
+def update_command(t=-1,p=-1,n=-1, r=-1, **kwargs):
     """
     Update a project, task or note with the supplied kwargs.
     """
@@ -139,8 +144,10 @@ def update_command(t=-1,p=-1,n=-1, **kwargs):
         Note.update(c, n, kwargs)
     elif p > 0:
         Project.update(c, p, kwargs)
+    elif r > 0:
+        Recipe.update(c, r, kwargs)
     else:
-        raise Exception("Must specify one of t (task), n (note) or p (project).")
+        raise Exception("Must specify one of t (task), n (note), p (project) or r (recipe).")
 
 def show_command(t=-1,n=-1,p=-1):
     """
@@ -159,32 +166,63 @@ def show_command(t=-1,n=-1,p=-1):
     else:
         raise Exception("Must specify one of t (task), n (note) or p (project).")
 
-def project_command(name=None, description=""):
+def project_command(
+        name=None, # the name of the project (required)
+        description="", # an optional description for this project
+        p=-1, # portfolio id for this project (required unless parent project specified)
+        parent=-1 # parent project id, if this is a subproject
+        ):
     """
     Create a new project.
     """
+    c = conn()
+
+    if parent > 0:
+        parent_project_id = parent
+        parent_project = Project.get(c, parent)
+        portfolio_id = parent_project.portfolio_id
+    else:
+        parent_project_id = None
+        if p > 0:
+            portfolio_id = p
+        else:
+            raise Exception("You must provide a portfolo id using the -p parameter if this project doesn't have a parent project.")
+
     project = Project.create(
-        conn(),
-        name=name,
+        c,
+        created_at = datetime.now(),
         description=description,
-        created_at = datetime.now()
+        parent_project_id=parent_project_id,
+        name=name,
+        portfolio_id=portfolio_id
     )
-    print "Created project", project.id
+    print project.id,
 
 def projects_command():
     """
     List all projects.
     """
-    projects = Project.all(conn())
+    projects = Project.all_nested_subprojects(conn())
     for project in projects:
         print project.display_line()
     if len(projects) == 0:
         print "No projects found."
 
-def task_command(name=None, context=None, p=-1, description="", due=-1, worktype="adhoc"):
+def task_command(
+        name=None, # The name for this task
+        context=None, # The @context in which task can be done
+        p=-1, # project id this task is part of
+        description="", # optional longer description for this task
+        due=-1, # due date in YYYY-MM-DD format
+        estimate=-1, # estimate of time this will take, in minutes
+        waiting=-1, # the id of another task that must be completed first
+        worktype="adhoc" # type of work this is
+        ):
     """
     Create a new task.
     """
+    c = conn()
+
     if due > 0:
         if re.match("[0-9]{4}-[0-9]{2}-[0-9]{2}", due):
             f = "%Y-%m-%d"
@@ -194,23 +232,77 @@ def task_command(name=None, context=None, p=-1, description="", due=-1, worktype
     else:
         due_at = None
 
-    if not worktype in WORKTYPES:
+    if estimate < 0:
+        estimate = None
+
+    if ENFORCE_WORKTYPES and not worktype in WORKTYPES:
         raise Exception("Acceptable worktypes are %s" % ", ".join(WORKTYPES))
 
+    if ENFORCE_WORKTYPES and worktype == "maintenance" and r < 0:
+        raise Exception("You must specify a recipe in order to designate a task as 'maintenance'")
+
+    if waiting > 0:
+        waiting_for_task = Task.get(c, waiting)
+        waiting_for_task_id = waiting_for_task.id
+        if p < 0:
+            # Get the project id based on the task we are waiting for.
+            project_id = waiting_for_task.project_id
+        else:
+            project_id = p
+    else:
+        waiting_for_task_id = None
+        if p > 0:
+            project_id = p
+        else:
+            print "putting new task into inbox"
+            project_id = None
+
     task = Task.create(
-        conn(),
+        c,
         due_at=due_at,
         name=name,
         context=context,
         description=description,
+        estimate=estimate,
+        project_id=project_id,
         worktype=worktype,
+        waiting_for_task_id=waiting_for_task_id,
         created_at = datetime.now()
     )
     print "Created task", task.id
-    if p > 0:
-        project = Project.get(c, p)
-        task.assign(project)
-        print "Assigned to project %s" % p
+
+def recipes_command():
+    c = conn()
+    recipes = Recipe.all(c)
+
+    for recipe in recipes:
+        print recipe.display_line()
+
+def recipe_command(
+        context=None, # context for this recipe
+        description="", # optional description of this recipe
+        frequency=-1, # how often this recipe should be done (in days)
+        name=None, # Name  of this recipe
+        p=None, # portfolio id
+        recipe=None # The instructions for how to perform this recipe.
+        ):
+    """
+    Create a new recipe.
+    """
+    if frequency < 0:
+        frequency = None
+
+    c = conn()
+    recipe = Recipe.create(
+            c,
+            context=context,
+            description=description,
+            frequency=frequency,
+            name=name,
+            portfolio_id=p,
+            recipe=recipe
+            )
+    print "Created recipe", recipe.id
 
 def tasks_command(by="id", search=-1):
     """
@@ -342,12 +434,29 @@ def complete_command(p=-1,t=-1):
     else:
         raise Exception()
 
+def start_command(r=None):
+    """
+    Start a timer for a recipe.
+    """
+    c = conn()
+    recipe = Recipe.get(c, r)
+    recipe_id = recipe.id
+    print recipe.recipe
+    task = Task.create(
+            c,
+            name="Doing Recipe %s (%s)" % (recipe_id, recipe.name),
+            recipe_id=recipe_id,
+            context=recipe.context
+            )
+    time_command(task.id)
+    print "Created task %s and started timer" % task.id
+
 def time_command(t=-1, description=""):
     """
     Starts a timer, optionally give a description and specify the task id you are working on.
     """
     c = conn()
-    active_timers = Time.active_timers(c)
+    active_timers = Timer.active_timers(c)
     if len(active_timers) > 0:
         # List the existing timer(s) and show elapsed times
         for timer in active_timers:
@@ -374,7 +483,7 @@ def time_command(t=-1, description=""):
         if not description and not task_id:
             print "No active timers. To create a new timer please specify either a description or a task id."
         else:
-            time = Time.create(
+            time = Timer.create(
                 c,
                 task_id=task_id,
                 description=description,
@@ -382,15 +491,44 @@ def time_command(t=-1, description=""):
             )
             print "Timer %s Started" % time.id
 
-def stop_command(timer=-1):
+def stop_command(t=-1):
     c = conn()
-    if timer > 0:
+    if t > 0:
         # stop the particular timer specified
-        timers = [ timer.id ]
+        timers = [ t ]
     else:
         # stop all timers (there's probably just 1)
-        timers = Time.active_timers(c)
+        timers = Timer.active_timers(c)
+
+    if len(timers) == 0:
+        print "No timers running."
 
     for timer in timers:
-        Time.stop(c, timer.id)
+        Timer.stop(c, timer.id)
         print "Stopped timer %04d total time %s" % (timer.id, timer.elapsed_time())
+
+def tasktime_command(t=None):
+    c = conn()
+    task = Task.get(c, t)
+    print task.total_time(c)
+
+def portfolio_command(name=None, description=None):
+    """
+    Creates a new portfolio.
+    """
+    c = conn()
+    portfolio = Portfolio.create(
+        c,
+        name=name,
+        description=description,
+        created_at = datetime.now()
+    )
+    print portfolio.id,
+
+def portfolios_command():
+    c = conn()
+    portfolios = Portfolio.all(c)
+
+    for portfolio in portfolios:
+        print portfolio.display_line()
+

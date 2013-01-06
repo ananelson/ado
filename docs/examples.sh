@@ -1,6 +1,6 @@
 ### @export "set-ado-dir"
 export ADO_DIR=`pwd`
-export ADO_DB_FILE=dexy--example.sqlite
+export ADO_DB_FILE=example.sqlite
 
 ### @export "setup"
 ado setup
@@ -8,9 +8,18 @@ ado setup
 ### @export "sqlite-dump"
 sqlite3 -line $ADO_DIR/$ADO_DB_FILE ".dump"
 
+### @export "portfolio"
+ado portfolio -name "Example" -description "This is an example portfolio."
+
+### @export "create-project"
+ado project -name "This is a project." -p 1
+
+### @export "projects"
+ado projects
+
 ### @export "create-note"
-ado note -note "This is the text of a note."
-echo "This is another note." | ado note
+ado note -note "do some stuff"
+echo "do some stuff" | ado note
 
 ### @export "list-notes"
 ado notes
@@ -31,8 +40,8 @@ ado archive -n 2
 ado notes
 
 ### @export "create-task"
-ado task -name "This is a task" -context "@home" -due "2012-02-02"
-ado task -name "This is another task" -context "@car" -description "This is a more detailed description of this task."
+ado task -name "This is a task" -context "@home" -due "2012-02-02" -p 1
+ado task -name "This is another task" -context "@car" -description "This is a more detailed description of this task." -p 1
 
 ### @export "list-tasks"
 ado tasks
@@ -45,12 +54,6 @@ ado show -t 1
 ### @export "complete-task"
 ado complete -t 1
 
-### @export "create-project"
-ado project -name "This is a project."
-
-### @export "projects"
-ado projects
-
 ### @export "create-note-in-project"
 ado note -note "This is a note in a project" -p 1
 
@@ -58,7 +61,7 @@ ado note -note "This is a note in a project" -p 1
 ado show -p 1
 
 ### @export "create-task-for-note"
-ado task -name "task with a note" -context "@anywhere"
+ado task -name "task with a note" -context "@anywhere" -p 1
 ado assign -n 3 -t 3
 ado show -t 3
 

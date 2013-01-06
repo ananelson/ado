@@ -1,5 +1,5 @@
-from ado.model import Model
 from ado.project import Project
+from ado.model import Model
 
 def test_table_name():
     assert Model.table_name() == "Model"

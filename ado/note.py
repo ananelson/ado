@@ -1,9 +1,7 @@
-from ado.model import Model
-from ado.project import Project
-from datetime import datetime
-import sqlite3
+import ado.model
+import ado.project
 
-class Note(Model):
+class Note(ado.model.Model):
     """
     Notes are stand-alone objects, or they can be assigned to projects or
     tasks, or they can be converted into projects or tasks. Notes can be used
@@ -42,7 +40,7 @@ class Note(Model):
         If linked to a project, retrieves the project.
         """
         if self.linked_to_type == "Project":
-            return Project.get(conn, self.linked_to_id)
+            return ado.project.Project.get(conn, self.linked_to_id)
         else:
             raise Exception("Not linked to a project")
 
