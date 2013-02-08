@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+        <link type="text/css" rel="stylesheet" href="/assets/style.css"/>
+        <script type="text/javascript" src="/d3/d3.js"></script>
+        <script type="text/javascript" src="/d3/d3.layout.js"></script>
+        <style type="text/css">
+
+            .chart {
+                display: block;
+                margin: auto;
+                margin-top: 60px;
+                font-size: 11px;
+            }
+
+            table {
+                border-collapse: collapse;
+                border: thin solid gray;
+            }
+
+            th, td {
+                border: thin solid gray;
+                padding: 5px;
+            }
+
+            .task-complete {
+                text-decoration: line-through;
+            }
+
+            .task-waiting {
+                color: #bbb;
+            }
+
+            .task-active {
+                background-color: #99FF99;
+            }
+
+            .project {
+                border: thin solid grey;
+                margin: 20px;
+                padding: 10px;
+            }
+
+            rect {
+                stroke: #eee;
+                fill: #aaa;
+                fill-opacity: .8;
+            }
+
+            rect.parent {
+                cursor: pointer;
+                fill: steelblue;
+            }
+
+            rect.active {
+                fill: #99FF99;
+            }
+
+            rect.waiting {
+                fill: #FFFF00;
+            }
+
+            rect.complete {
+                fill: #333333;
+            }
+
+            text {
+                pointer-events: none;
+            }
+
+        </style>
+    </head>
+    <body>
+        <div id="body">
+            <div id="footer">
+                <p><a href="report.pdf">Download PDF</a> | <a href="#html">Jump to HTML</a></p>
+            </div>
+        </div>
+        <div>
+            <div id="html" style="padding-left: 50px;">
+                <h1>Tasks</h1>
+                <p>Listing of tasks by context.</p>
+                <table>
+                    <tr>
+                        <th>Context</th>
+                        <th>Task</th>
+                        <th>Due</th>
+                    </tr>
+                    {% for task in f.tasks() -%}
+                    <tr>
+                        <td>{{ task.context }}</td>
+                        <td><a href="#task-{{task.id}}">{{ task.name }}</a></td>
+                        <td>{{ task.due_at }}</td>
+                    </tr>
+                    {% endfor -%}
+                </table>
+                <h1>Portfolios</h1>
+                {% for portfolio in f.portfolios() -%}
+                <h2 id="portfolio-{{ portfolio.id}}">Portfolio {{portfolio.id}}) {{ portfolio.name }}</h2>
+                <p>{{ portfolio.description }}</p>
+                {% for project in portfolio.projects() -%}
+                <div class="project">
+                    <h3 id="project-{{project.id}}">Project {{ project.id }}) {{ project.name }}</h3>
+                    <p>{{ project.description }}</p>
+                    <ul>
+                        {% for task in project.tasks() -%}
+                        <li id="task-{{ task.id}}" class="task-{{ task.state() }}">Task {{ task.id }}) {{ task.context }} {{ task.name }}</li>
+                        {% endfor -%}
+                    </ul>
+                </div>
+                {% endfor -%}
+                {% endfor -%}
+            </div>
+        </div>
+        <script type="text/javascript">
+
+            var w = 1120,
+            h = 600,
+            x = d3.scale.linear().range([0, w]),
+            y = d3.scale.linear().range([0, h]);
+
+var vis = d3.select("#body").append("div")
+.attr("class", "chart")
+.style("width", w + "px")
+.style("height", h + "px")
+.append("svg:svg")
+.attr("width", w)
+.attr("height", h);
+
+var partition = d3.layout.partition()
+    .value(function(d) { return d.size; });
+
+    d3.json("ado.json", function(root) {
+            var g = vis.selectAll("g")
+            .data(partition.nodes(root))
+            .enter().append("svg:g")
+            .attr("transform", function(d) { return "translate(" + x(d.y) + "," + y(d.x) + ")"; })
+            .on("click", click);
+
+            var kx = w / root.dx,
+            ky = h / 1;
+
+            g.append("svg:rect")
+            .attr("width", root.dy * kx)
+            .attr("height", function(d) { return d.dx * ky; })
+            .attr("class", function(d) { return d.children ? "parent" : d.state; })
+            .attr("title", function(d) { return d.title; });
+
+            g.append("svg:text")
+            .attr("transform", transform)
+            .attr("dy", ".35em")
+            .style("opacity", function(d) { return d.dx * ky > 12 ? 1 : 0; })
+            .text(function(d) { return d.name; })
+
+            d3.select(window)
+            .on("click", function() { click(root); })
+
+            function click(d) {
+                if (!d.children) return;
+
+                kx = (d.y ? w - 40 : w) / (1 - d.y);
+                ky = h / d.dx;
+                x.domain([d.y, 1]).range([d.y ? 40 : 0, w]);
+                y.domain([d.x, d.x + d.dx]);
+
+                var t = g.transition()
+                    .duration(d3.event.altKey ? 7500 : 750)
+                    .attr("transform", function(d) { return "translate(" + x(d.y) + "," + y(d.x) + ")"; });
+
+                t.select("rect")
+                    .attr("width", d.dy * kx)
+                    .attr("height", function(d) { return d.dx * ky; });
+
+                t.select("text")
+                    .attr("transform", transform)
+                    .style("opacity", function(d) { return d.dx * ky > 12 ? 1 : 0; });
+
+                d3.event.stopPropagation();
+            }
+
+    function transform(d) {
+        return "translate(8," + d.dx * ky / 2 + ")";
+    }
+    });
+
+</script>
+  </body>
+</html>
