@@ -48,6 +48,25 @@ class Task(Model):
         else:
             return "no project"
 
+    def name_with_check(self):
+        """
+        Returns name of task with unicode empty ballot box (if not complete)
+        """
+        if self.completed_at:
+            return u"%s \u2611 %s" % (self.name, self.context)
+        elif self.waiting_for_task_id:
+            return u"%s \u2612 %s" % (self.name, self.context)
+        else:
+            return u"%s \u2610 %s" % (self.name, self.context)
+
+    def state(self, conn=None):
+        if self.completed_at:
+            return "complete"
+        elif self.waiting_for_task_id:
+            return "waiting"
+        else:
+            return "active"
+
     def display_line(self):
         if self.due_at:
             due_at = " (due in %0d days)" % self.days_until_due()

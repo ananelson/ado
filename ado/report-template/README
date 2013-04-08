@@ -1,0 +1,9 @@
+Run the examples.sh script directly to populate a database with example TODOs
+and generate the documentation. This script will run dexy, which should be
+installed.
+
+Or simply run dexy in this directory and the index.html will contain an
+overview of your portfolios, projects and tasks that you have entered into ado.
+
+http://dexy.it/ado
+

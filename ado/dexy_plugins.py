@@ -5,19 +5,19 @@ from ado.note import Note
 from ado.portfolio import Portfolio
 from ado.project import Project
 from ado.task import Task
-import dexy.plugins.templating_filters
+import dexy.filters.templating
 
-class AdoFilter(dexy.plugins.templating_filters.JinjaFilter):
+class AdoFilter(dexy.filters.templating.JinjaFilter):
     """
     A jinja filter with information from ado content.
     """
-    ALIASES = ['adojinja']
+    aliases = ['adojinja']
 
     def projects(self):
         return Project.all_nested_subprojects(conn())
 
-    def tasks(self):
-        return Task.all(conn())
+    def tasks(self, sort_by=None):
+        return Task.all(conn(), sort_by)
 
     def portfolios(self):
         return Portfolio.all(conn())
@@ -30,3 +30,9 @@ class AdoFilter(dexy.plugins.templating_filters.JinjaFilter):
 
     def inbox_notes(self):
         return Note.inbox(conn())
+
+class ReportTemplate(dexy.template.Template):
+    """
+    Report of ado items.
+    """
+    aliases = ['adoreport']

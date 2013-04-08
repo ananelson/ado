@@ -2,9 +2,9 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-        <link type="text/css" rel="stylesheet" href="/assets/style.css"/>
-        <script type="text/javascript" src="/d3/d3.js"></script>
-        <script type="text/javascript" src="/d3/d3.layout.js"></script>
+        <link type="text/css" rel="stylesheet" href="assets/style.css"/>
+        <script type="text/javascript" src="d3/d3.js"></script>
+        <script type="text/javascript" src="d3/d3.layout.js"></script>
         <style type="text/css">
 
             .chart {
@@ -69,17 +69,36 @@
                 pointer-events: none;
             }
 
+            pre, code {
+                font-size: 11px;
+            }
+
+            {{ pygments['pastie.css'] }}
+
         </style>
     </head>
     <body>
         <div id="body">
             <div id="footer">
-                <p><a href="report.pdf">Download PDF</a> | <a href="#html">Jump to HTML</a></p>
+                <p><a href="report.pdf">Download PDF</a> | <a href="#html">Jump to HTML</a> | <a href="#docs">Jump to Docs</a></p>
             </div>
         </div>
         <div>
             <div id="html" style="padding-left: 50px;">
-                <h1>Tasks</h1>
+                <p>
+                <a href="#recipes">recipes</a> |
+                <a href="#tasks">tasks</a> |
+                <a href="#portfolios">portfolios</a> |
+                </p>
+                <h2 id="recipes">Recipes</h2>
+                <p><a href="#html">&uarr;</a></p>
+                <ul>
+                    {% for recipe in f.recipes() -%}
+                    {{ recipe }}
+                    {% endfor -%}
+                </ul>
+                <h2 id="tasks">Tasks</h2>
+                <p><a href="#html">&uarr;</a></p>
                 <p>Listing of tasks by context.</p>
                 <table>
                     <tr>
@@ -87,7 +106,7 @@
                         <th>Task</th>
                         <th>Due</th>
                     </tr>
-                    {% for task in f.tasks() -%}
+                    {% for task in f.tasks('context') -%}
                     <tr>
                         <td>{{ task.context }}</td>
                         <td><a href="#task-{{task.id}}">{{ task.name }}</a></td>
@@ -95,22 +114,31 @@
                     </tr>
                     {% endfor -%}
                 </table>
-                <h1>Portfolios</h1>
+                <h2 id="portfolios">Portfolios</h2>
+                <p><a href="#html">&uarr;</a></p>
                 {% for portfolio in f.portfolios() -%}
-                <h2 id="portfolio-{{ portfolio.id}}">Portfolio {{portfolio.id}}) {{ portfolio.name }}</h2>
+                <h3 id="portfolio-{{ portfolio.id}}">Portfolio {{portfolio.id}}) {{ portfolio.name }}</h3>
                 <p>{{ portfolio.description }}</p>
                 {% for project in portfolio.projects() -%}
                 <div class="project">
-                    <h3 id="project-{{project.id}}">Project {{ project.id }}) {{ project.name }}</h3>
+                    <h4 id="project-{{project.id}}">Project {{ project.id }}) {{ project.name }}</h4>
                     <p>{{ project.description }}</p>
                     <ul>
                         {% for task in project.tasks() -%}
-                        <li id="task-{{ task.id}}" class="task-{{ task.state() }}">Task {{ task.id }}) {{ task.context }} {{ task.name }}</li>
+                        <li id="task-{{ task.id}}" class="task-{{ task.state() }}">
+                        Task {{ task.id }}) {{ task.context }} {{ task.name }}
+                        {% if task.description -%}
+                        <p>{{ task.description }}</p>
+                        {% endif -%}
+                        </li>
                         {% endfor -%}
                     </ul>
                 </div>
                 {% endfor -%}
                 {% endfor -%}
+            </div>
+            <div id="docs" style="padding-left: 50px;">
+                {{ d['docs.md|adojinja|markdown'] }}
             </div>
         </div>
         <script type="text/javascript">

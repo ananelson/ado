@@ -21,11 +21,11 @@ class Project(ado.model.Model):
     def all_nested_subprojects(klass, conn):
         projects = []
 
-        sql = "select * from %s where parent_project_id IS NULL" % klass.table_name()
+        sql = "select * from %s where parent_project_id IS NULL and archived_at IS NULL" % klass.table_name()
 
         def append_self_and_children(project):
             projects.append(project)
-            sql = "select * from %s where parent_project_id = ?" % klass.table_name()
+            sql = "select * from %s where parent_project_id = ? and archived_at IS NULL" % klass.table_name()
             for row in conn.execute(sql, [project.id]):
                 child_project = klass.load(conn, row)
                 append_self_and_children(child_project)
@@ -82,11 +82,18 @@ class Project(ado.model.Model):
         sql = "select * from %s where linked_to_type = 'Project' and linked_to_id = %s" % (ado.note.Note.table_name(), self.id)
         return [ado.note.Note.load(conn, row) for row in conn.execute(sql)]
 
+    def open_tasks(self, conn=None):
+        if not conn:
+            conn = self.conn
+
+        sql = "select * from %s where project_id = %s and archived_at IS NULL and completed_at IS NULL" % (ado.task.Task.table_name(), self.id)
+        return [ado.task.Task.load(conn, row) for row in conn.execute(sql)]
+
     def tasks(self, conn=None):
         if not conn:
             conn = self.conn
 
-        sql = "select * from %s where project_id = %s" % (ado.task.Task.table_name(), self.id)
+        sql = "select * from %s where project_id = %s and archived_at IS NULL" % (ado.task.Task.table_name(), self.id)
         return [ado.task.Task.load(conn, row) for row in conn.execute(sql)]
 
     def display_line(self):
@@ -106,7 +113,7 @@ class Project(ado.model.Model):
         return "%-20s %-40s (in %s%s)%s" % (indented_start, self.name, self.portfolio().name, parent_project_description, due_at)
 
     def validate_complete(self, conn):
-        return (len(self.tasks()) == 0)
+        return (len(self.open_tasks()) == 0)
 
     def show(self):
         show_text = []

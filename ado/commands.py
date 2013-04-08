@@ -1,12 +1,14 @@
+from ado.metric import Metric
+from ado.metric_data import MetricData
 from ado.model import Model
 from ado.note import Note
 from ado.portfolio import Portfolio
 from ado.project import Project
 from ado.recipe import Recipe
+from ado.survey import Survey
+from ado.survey_data import SurveyData
 from ado.task import Task
 from ado.timer import Timer
-from ado.metric import Metric
-from ado.metric_data import MetricData
 from datetime import datetime
 from modargs import args
 import os
@@ -16,8 +18,8 @@ import sys
 
 ADO_DB_FILE = "ado.sqlite3"
 ADO_DIR = os.path.expanduser("~/.ado")
-CLASSES = [Portfolio, Project, Task, Note, Timer, Recipe, Metric, MetricData]
-DEFAULT_COMMAND = 'listp'
+CLASSES = [Portfolio, Project, Task, Note, Timer, Recipe, Metric, MetricData, Survey, SurveyData]
+DEFAULT_COMMAND = 'projects'
 MOD = sys.modules[__name__]
 PROG = 'ado'
 ENFORCE_WORKTYPES = True # set to false if you don't care about worktypes/recipes
@@ -59,9 +61,64 @@ def db_filepath():
 def conn():
     return Model.setup_db(db_filepath())
 
-def note_command(note="", p=-1, t=-1):
+def blotter_command():
     """
-    Create a new note.
+    Starts a timer. Records everything written to STDIN. Stops timer when
+    ctrl+d is typed. Creates a task with last line of blotter as name, rest of
+    blotter as description.
+    """
+    c = conn()
+    created_at = datetime.now()
+    description = ''
+    print "Type ctrl+d to save task (might need to type it twice). ctrl+c to cancel."
+    print "Started at %s" % created_at
+    try:
+        while True:
+            line = sys.stdin.readline()
+            if len(line) > 1:
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                description += "%s:: %s" % (timestamp, line)
+            elif len(line) == 1:
+                description += line
+            else:
+                break
+
+        name = raw_input("name of task: ")
+        context = raw_input("context for task (defaults to @computer): ")
+        if not context:
+            context = "@computer"
+        worktype = raw_input("type of work (defaults to 'adhoc'): ")
+
+        description = description.strip()
+        completed_at = datetime.now()
+        task = Task.create(
+            c,
+            name=name,
+            context=context,
+            worktype=worktype,
+            description=description,
+            created_at = created_at,
+            completed_at = completed_at
+        )
+        Timer.create(
+                c,
+                task_id = task.id,
+                started_at = created_at,
+                finished_at = completed_at,
+                description = task.description
+                )
+        print task.id
+    except KeyboardInterrupt:
+        print "cancelled"
+
+def note_command(
+        note="", # the contents of the note
+        p=-1, # the project id to link the new note to (optional)
+        t=-1 # the task id to link the new note to (optional)
+        ):
+    """
+    Create a new note. If note contents are not specified, will read from
+    STDIN.
     """
     c = conn()
 
@@ -75,11 +132,14 @@ def note_command(note="", p=-1, t=-1):
         note=note,
         created_at = datetime.now()
     )
+
     print "Created note", n.id
+
     if p > 0:
         project = Project.get(c, p)
         n.assign(c, project)
         print "Assigned to project %s" % p
+
     elif t > 0:
         task = Task.get(c, t)
         n.assign(c, task)
@@ -149,9 +209,14 @@ def update_command(t=-1,p=-1,n=-1, r=-1, **kwargs):
     else:
         raise Exception("Must specify one of t (task), n (note), p (project) or r (recipe).")
 
-def show_command(t=-1,n=-1,p=-1):
+def show_command(
+        t=-1, # id of task to show detail on
+        n=-1, # id of note to show detail on
+        p=-1, # id of project to show detail on
+        portfolio=-1 # id of portfolio to show detail on
+        ):
     """
-    Print detailed information for a project, task or note.
+    Print detailed information for a project, task, note or portfolio.
     """
     c = conn()
     if t > 0:
@@ -163,8 +228,11 @@ def show_command(t=-1,n=-1,p=-1):
     elif p > 0:
         project = Project.get(c, p)
         print project.show()
+    elif portfolio > 0:
+        portfolio = Portfolio.get(c, portfolio)
+        print portfolio.show()
     else:
-        raise Exception("Must specify one of t (task), n (note) or p (project).")
+        raise Exception("Must specify one of t (task), n (note), p (project) or portfolio.")
 
 def project_command(
         name=None, # the name of the project (required)
@@ -206,12 +274,14 @@ def projects_command():
     for project in projects:
         print project.display_line()
     if len(projects) == 0:
-        print "No projects found."
+        print "No projects found. Run 'ado help' if you need help."
 
 def task_command(
         name=None, # The name for this task
         context=None, # The @context in which task can be done
+        complete=False, # Whether task is already complete.
         p=-1, # project id this task is part of
+        r=-1, # recipe this task corresponds to
         description="", # optional longer description for this task
         due=-1, # due date in YYYY-MM-DD format
         estimate=-1, # estimate of time this will take, in minutes
@@ -257,6 +327,11 @@ def task_command(
             print "putting new task into inbox"
             project_id = None
 
+    if complete:
+        completed_at = datetime.now()
+    else:
+        completed_at = None
+
     task = Task.create(
         c,
         due_at=due_at,
@@ -267,7 +342,8 @@ def task_command(
         project_id=project_id,
         worktype=worktype,
         waiting_for_task_id=waiting_for_task_id,
-        created_at = datetime.now()
+        created_at = datetime.now(),
+        completed_at = completed_at
     )
     print "Created task", task.id
 
@@ -390,7 +466,11 @@ def load_command(filename=None):
             c.execute(line)
         c.commit()
 
-def delete_command(n=-1,p=-1,t=-1):
+def delete_command(
+        n=-1, # id of the note to delete
+        p=-1, # id of the project to delete
+        t=-1 # id of the task to delete
+        ):
     """
     Delete the note, project or task specified.
     """
@@ -404,7 +484,11 @@ def delete_command(n=-1,p=-1,t=-1):
     else:
         raise Exception()
 
-def archive_command(n=-1,p=-1,t=-1):
+def archive_command(
+        n=-1, # id of the note to archive
+        p=-1, # id of the project to archive
+        t=-1 # id of the task to archive
+        ):
     """
     Archive the note, project or task specified.
     """
@@ -418,7 +502,10 @@ def archive_command(n=-1,p=-1,t=-1):
     else:
         raise Exception()
 
-def complete_command(p=-1,t=-1):
+def complete_command(
+        p=-1, # id of the project to mark complete
+        t=-1 # id of the task to mark complete
+        ):
     """
     Mark the project or task as completed.
     """
@@ -426,6 +513,7 @@ def complete_command(p=-1,t=-1):
     if p > 0:
         project = Project.get(c, p)
         project.complete(c)
+        Project.archive(c, project.id)
         print "Project %s marked as complete!" % p
     elif t > 0:
         task = Task.get(c, t)
@@ -532,3 +620,147 @@ def portfolios_command():
     for portfolio in portfolios:
         print portfolio.display_line()
 
+def metric_command(
+        name=None,
+        description=""
+        ):
+    """
+    Define a new metric.
+    """
+    c = conn()
+    metric = Metric.create(
+            c,
+            name=name,
+            description=description,
+            crated_at = datetime.now()
+            )
+    print metric.id,
+
+def survey_command(
+        name=None,
+        description=""
+        ):
+    """
+    Define a new survey.
+    """
+    c = conn()
+    survey = Survey.create(
+            c,
+            name=name,
+            description=description,
+            crated_at = datetime.now()
+            )
+    print survey.id,
+
+def record_command(
+        m=-1,
+        s=-1,
+        value=None
+        ):
+    """
+    Record a data point for a metric or survey.
+    """
+    # TODO be able to specify custom date/time
+    c = conn()
+    if m > 0:
+        MetricData.create(
+                c,
+                metric_id=m,
+                value=value,
+                created_at = datetime.now()
+                )
+    elif s > 0:
+        SurveyData.create(
+                c,
+                survey_id=s,
+                value=value,
+                created_at = datetime.now()
+                )
+
+def values_command(
+        m=-1, # The metric id to print data for.
+        s=-1 # The survey id to print data for.
+        ):
+    """
+    Returns space-separated data for a metric, or longer form data for a survey.
+    
+    Metric output can be piped to spark. https://github.com/holman/spark
+    """
+    c = conn()
+    if m > 0:
+        metric = Metric.get(c, m)
+        datetimes, values = metric.ts(c)
+        print " ".join("%s" % v for v in values)
+    elif s > 0:
+        survey = Survey.get(c, s)
+        for row in survey.data(c):
+            print row['created_at']
+            print row['value']
+            print ''
+
+def metrics_command():
+    """
+    Run through all metrics and gather data from responses.
+    """
+    c = conn()
+    metrics = Metric.all(c)
+    if len(metrics) == 0:
+        print "No metrics found, define some first with 'ado metric'"
+    else:
+        for metric in metrics:
+            try:
+                print metric.id, ' ',
+                if metric.description:
+                    value = raw_input(metric.description + "\n")
+                else:
+                    value = raw_input(metric.name + ": ")
+
+                if len(value) > 0:
+                    MetricData.create(
+                            c,
+                            metric_id = metric.id,
+                            value=value,
+                            created_at = datetime.now()
+                            )
+            except KeyboardInterrupt:
+                print "quitting"
+
+
+def surveys_command():
+    """
+    Run through all surveys and gather data from responses.
+
+    Can enter multiple line responses, will quit when blank line is reached.
+    """
+    c = conn()
+    surveys = Survey.all(c)
+    if len(surveys) == 0:
+        print "No surveys found, define some first with 'ado survey'"
+    else:
+        for survey in surveys:
+            try:
+                print survey.id, ' ',
+                if survey.description:
+                    print "%s\n" % survey.description
+                else:
+                    print "%s:\n" % survey.name
+    
+                value = []
+                while True:
+                    line = raw_input()
+                    if len(line) > 0:
+                        value.append(line)
+                    else:
+                        break
+                
+                if len(value) > 0:
+                    SurveyData.create(
+                            c,
+                            survey_id = survey.id,
+                            value="\n".join(value),
+                            created_at = datetime.now()
+                            )
+                else:
+                    print "nothing entered, not making a record"
+            except KeyboardInterrupt:
+                print "quitting"

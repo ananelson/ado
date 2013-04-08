@@ -10,6 +10,7 @@ def dict_for_task(task):
     return {
             "name" : "[%d] %s" % (task.id, task.name_with_check()),
             "size" : 1,
+            "title" : task.description,
             "state" : task.state()
             }
 

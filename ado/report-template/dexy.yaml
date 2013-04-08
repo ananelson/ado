@@ -1,0 +1,15 @@
+docs:
+    - docs.md|adojinja|markdown:
+        - examples.sh|idio|shint|pyg
+
+report:
+    - index.html|adojinja:
+        - docs
+    
+    - export-data-json.py|py:
+        - py: { add-new-files: True }
+
+assets:
+    - .js
+    - .png
+    - .css

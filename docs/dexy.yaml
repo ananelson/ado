@@ -1,6 +1,23 @@
-docs.tex|adojinja|latex:
+content:
+    - docs.rst|adojinja|rst|latex:
+        - code
+        - tex-assets
+        - rst: { stylesheet : 'fancyvrb,pastie.sty' }
+    - docs.rst|adojinja|rst:
+        - code
+
+tex-assets:
+    - pastie.sty|pyg:
+        - contents: ' '
+        - version: 1
+        - pyg: { 'ext' : '.sty' }
+
+code:
     - packages.txt|pydoc:
         - contents: 'ado'
     - .sh|idio|shint|pyg|l
+    - .sh|idio|shint|pyg|h
     - .sh|pyg|l
+    - .sh|pyg|h
     - .tex|pyg|l
+    - .tex|pyg|h

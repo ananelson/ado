@@ -20,18 +20,17 @@ class Metric(ado.model.Model):
 
         sql = "select * from %s where metric_id = %s ORDER BY created_at DESC LIMIT 1"
         rows = conn.execute(sql % (MetricData.table_name(), self.id))
-        return ado.metric_data.MetricData.load(conn, rows.fetchone())
+        return MetricData.load(conn, rows.fetchone())
 
     def ts(self, conn=None):
         """
         Returns time series of all data points.
         """
-        md_table = ado.metric_data.MetricData.table_name()
-        sql = "select * from %s where metric_id = %s ORDER BY created_at" % (md_table, self.id)
+        sql = "select * from %s where metric_id = %s ORDER BY created_at"
 
         datetimes = []
         values = []
-        rows = conn.execute(sql)
+        rows = conn.execute(sql % (MetricData.table_name(), self.id))
         for row in rows:
             datetimes.append(row['created_at'])
             values.append(row['value'])
