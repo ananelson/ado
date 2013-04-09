@@ -96,5 +96,3 @@ ado inbox
 
 dexy setup
 dexy
-
-rm $ADO_DB_FILE

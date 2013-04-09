@@ -2,7 +2,8 @@
 *.sw*
 output/
 output-long/
+output-site/
 logs/
-artifacts/
+.cache/
 *egg-info*
 .bugs.done

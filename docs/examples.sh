@@ -72,8 +72,17 @@ ado show -t 3
 ### @export "inbox"
 ado inbox
 
+### @export "version"
+ado version
+
 ### @export "help"
 ado help
 
 ### @export "help on projects"
 ado help -on projects
+
+### @export "create conf"
+echo "plugins: 'ado.dexy_plugins'" > dexy.conf
+
+### @export "dexy templates"
+dexy templates | grep ado

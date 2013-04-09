@@ -9,6 +9,7 @@ from ado.survey import Survey
 from ado.survey_data import SurveyData
 from ado.task import Task
 from ado.timer import Timer
+from ado.version import ADO_VERSION
 from datetime import datetime
 from modargs import args
 import os
@@ -32,6 +33,9 @@ WORKTYPES = [
 
 def available_commands():
     return args.available_commands(MOD)
+
+def version_command():
+    print ADO_VERSION
 
 def help_command(on=False):
     """
@@ -270,7 +274,8 @@ def projects_command():
     """
     List all projects.
     """
-    projects = Project.all_nested_subprojects(conn())
+    c = conn()
+    projects = Project.all_nested_subprojects(c)
     for project in projects:
         print project.display_line()
     if len(projects) == 0:

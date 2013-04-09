@@ -1,6 +1,7 @@
 docs:
     - docs.md|adojinja|markdown:
         - examples.sh|idio|shint|pyg
+    - report.tex|adojinja|latex
 
 report:
     - index.html|adojinja:

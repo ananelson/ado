@@ -55,12 +55,5 @@ The setup_db method creates a connection to a sqlite database:
 Source
 ------
 
-This Document
-.............
-
 {{ code( s.baserootname() + ".rst|pyg") }}
 
-_pages.jinja
-............
-
-{{ code('_pages.jinja|pyg') }}

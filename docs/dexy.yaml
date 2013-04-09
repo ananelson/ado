@@ -8,13 +8,12 @@ assets:
     - .png
 
 latex-content:
-    - .rst|yamlargs|jinja|rst|latex:
+    - .rst|yamlargs|adojinja|rst|latex:
         - rst: { stylesheet : 'fancyvrb,pastie.sty' }
         - content-deps
         - tex-assets
-    - the-ado-guide.rst|jinja|rst|latex:
+    - the-ado-guide.rst|adojinja|rst|latex:
         - rst: { stylesheet : 'fancyvrb,pastie.sty' }
-        - .rst
         - content-deps
         - tex-assets
 
@@ -25,6 +24,8 @@ tex-assets:
         - pyg: { 'ext' : '.sty' }
 
 content-deps:
+    - .rst
+    - .jinja
     - packages.txt|pydoc:
         - contents: 'ado'
     - .sh|idio|shint|pyg|l:
