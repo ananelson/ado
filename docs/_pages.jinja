@@ -1,0 +1,32 @@
+{% set pages = (
+        "quickstart",
+        "command-line-interface",
+        'ado-internals',
+        ) -%}
+
+{% set previous_page = None -%}
+{% set next_page = None -%}
+
+{% set previous_rst_link = '' -%}
+{% set next_rst_link = '' -%}
+
+{% if s is defined %}
+{% if s.baserootname() in pages %}
+{% set pageindex = pages.index(s.baserootname()) -%}
+{% if pageindex > 0 -%}
+{% set previous_page = pages[pageindex-1] -%}
+{% endif -%}
+{% if pageindex < len(pages) -1 -%}
+{% set next_page = pages[pageindex+1] -%}
+{% endif -%}
+{% endif %}
+{% else -%}
+{% endif %}
+
+{% if previous_page -%}
+{% set previous_rst_link = "`Previous <%s.html>`__" % previous_page -%}
+{% endif %}
+
+{% if next_page -%}
+{% set next_rst_link = "`Next <%s.html>`__" % next_page -%}
+{% endif %}

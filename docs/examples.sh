@@ -71,3 +71,9 @@ ado show -t 3
 
 ### @export "inbox"
 ado inbox
+
+### @export "help"
+ado help
+
+### @export "help on projects"
+ado help -on projects

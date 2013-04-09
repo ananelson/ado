@@ -1,5 +1,5 @@
-Ado
-===
+Command Line Interface
+======================
 
 {% from "dexy.jinja" import hl, code, codes with context %}
 
@@ -31,7 +31,7 @@ You can override either of these locations by setting environment constants:
 
 {{ codes('examples.sh|idio|shint|pyg', 'set-ado-dir') }}
 
-The `Setup`_ command creates the `ADO_DIR` directory (if necessary)
+The setup command creates the `ADO_DIR` directory (if necessary)
 and creates the tables in the database:
 
 {{ codes('examples.sh|idio|shint|pyg', 'setup') }}
@@ -105,7 +105,7 @@ To list all projects:
 
 {{ codes('examples.sh|idio|shint|pyg', 'projects') }}
 
-Notes with Porjects and Tasks
+Notes with Projects and Tasks
 -----------------------------
 
 Notes can be assigned to projects or tasks, either when they are created, or
@@ -157,11 +157,3 @@ sort your tasks by context.
 The tasks, notes and projects commands also take a 'search' option which lets
 you find objects that have the search string. The `search` command lets
 you search across notes, tasks and projects.
-
-Commands
---------
-
-Setup
-.....
-
-setup...

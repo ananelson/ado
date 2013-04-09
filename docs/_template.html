@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+
+{% from '_pages.jinja' import next_page, previous_page with context -%}
+
+<html>
+    <head>
+        <!--
+        *****************************************************************
+        Fluid Baseline Grid v1.0.0
+        Designed & Built by Josh Hopkins and 40 Horse, http://40horse.com
+        Licensed under Unlicense, http://unlicense.org/
+        *****************************************************************
+        -->
+        <title>{{ s.title() }}</title>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+        <meta name="description" content="" />
+        <meta name="author" content="">
+        <meta name="keywords" content="" />
+
+        <!-- Optimized mobile viewport -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <!-- Place favicon.ico and apple-touch-icon.png in root directory -->
+
+        <link href="/css/style.css" rel="stylesheet" />
+        <link href="/css/pygments.css" rel="stylesheet" />
+    </head>
+
+    <body>
+        <header>
+        <div class="g3">
+            <p>
+            <a href="/"><span>&uarr; The Ado Guide</span></a>
+            </p>
+
+            <h1>{{ s.title() }}</h1>
+
+            <p>
+            {% if previous_page -%}
+            <a href="{{ previous_page }}.html"><span>&lt;&lt;{{ titleize(previous_page) }}</span></a> |
+            {% endif -%}
+
+            {% if not s.title() == "The Ado Guide" -%}
+            <span>
+                {{ s.title() }}
+                (<a href="{{ s.baserootname() }}.pdf">PDF</a>)
+            </span>
+            {% endif -%}
+
+            {% if next_page -%}
+            | <a href="{{ next_page }}.html"><span>{{ titleize(next_page) }} &gt;&gt;</span></a>
+            {% endif -%}
+            </p>
+        </div>
+        </header>
+        <div class="cf"></div>
+        <div id="content">
+            <div class="g3">
+                {{ content }}
+
+                <p>
+                {% if previous_page -%}
+                <a href="{{ previous_page }}.html"><span>&lt;&lt;{{ titleize(previous_page) }}</span></a> |
+                {% endif -%}
+
+                {% if not s.title() == "The Ado Guide" -%}
+                <span>
+                    {{ s.title() }}
+                    (<a href="{{ s.baserootname() }}.pdf">PDF</a>)
+                </span>
+                {% endif -%}
+
+                {% if next_page -%}
+                | <a href="{{ next_page }}.html"><span>{{ titleize(next_page) }} &gt;&gt;</span></a>
+                {% endif -%}
+                </p>
+            </div>
+        </div>
+        <footer class="g3 cf">
+        <small>Site made with <a href="http://dexy.it">dexy.it</a>.</small>
+        </footer>
+
+        <!-- JavaScript at the bottom for fast page loading -->
+
+        <!-- Minimized jQuery from Google CDN -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+
+        <!-- HTML5 IE Enabling Script -->
+        <!--[if lt IE 9]><script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+        <!-- CSS3 Media Queries -->
+        <script src="js/respond.min.js"></script>
+    </body>
+</html>
