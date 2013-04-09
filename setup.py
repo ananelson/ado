@@ -7,7 +7,8 @@ setup(
         packages=find_packages(),
         version=ADO_VERSION,
         install_requires = [
-            'python-modargs>=1.6'
+            'python-modargs',
+            'dexy>0.9.9'
             ],
         entry_points = {
             'console_scripts' : [ 'ado = ado.commands:run' ]

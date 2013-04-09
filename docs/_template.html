@@ -23,15 +23,16 @@
 
         <!-- Place favicon.ico and apple-touch-icon.png in root directory -->
 
-        <link href="/css/style.css" rel="stylesheet" />
-        <link href="/css/pygments.css" rel="stylesheet" />
+        <link href="/ado/guide/css/style.css" rel="stylesheet" />
+        <link href="/ado/guide/css/pygments.css" rel="stylesheet" />
     </head>
 
     <body>
         <header>
         <div class="g3">
             <p>
-            <a href="/"><span>&uarr; The Ado Guide</span></a>
+            <a href="/ado/guide"><span>&uarr; The Ado Guide</span></a> |
+            <a href="/ado"><span>&uarr; Ado</span></a>
             </p>
 
             <h1>{{ s.title() }}</h1>
@@ -56,7 +57,7 @@
         </header>
         <div class="cf"></div>
         <div id="content">
-            <div class="g3">
+            <div class="g2">
                 {{ content }}
 
                 <p>
@@ -64,7 +65,7 @@
                 <a href="{{ previous_page }}.html"><span>&lt;&lt;{{ titleize(previous_page) }}</span></a> |
                 {% endif -%}
 
-                {% if not s.title() == "The Ado Guide" -%}
+                {% if not s.title() in ("The Ado Guide", "Ado") -%}
                 <span>
                     {{ s.title() }}
                     (<a href="{{ s.baserootname() }}.pdf">PDF</a>)

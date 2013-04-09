@@ -96,4 +96,5 @@ dexy gen -t adoreport -d myado
 ### @export "run"
 cd myado
 ls
+dexy setup
 dexy

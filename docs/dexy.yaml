@@ -1,4 +1,6 @@
 content:
+    - ado-index.md|jinja|markdown|easyhtml:
+        - output: True
     - .rst|yamlargs|adojinja|rstbody:
         - content-deps
 
@@ -29,15 +31,23 @@ content-deps:
     - packages.txt|pydoc:
         - contents: 'ado'
     - examples.sh|idio|shint|pyg|l:
-        - shint: { 'term' : 'vt100' }
+        - shint: { 'term' : 'vt100', timeout: 60 }
     - examples.sh|idio|shint|pyg|h:
-        - shint: { 'term' : 'vt100' }
+        - shint: { 'term' : 'vt100', timeout: 60 }
     - .sh|pyg|l
     - .sh|pyg|h
     - .sh|idio|l
     - .sh|idio|h
     - .rst|pyg|l
     - .rst|pyg|h
+    - .js|pyg|l
+    - .js|pyg|h
+    - .js|idio|l
+    - .js|idio|h
+    - .yaml|pyg|l
+    - .yaml|pyg|h
+    - .yaml|idio|l
+    - .yaml|idio|h
     - .jinja|pyg|l
     - .jinja|pyg|h
     - script:screenshots-h
@@ -46,7 +56,7 @@ content-deps:
 script:screenshots-h:
     - storage: { DEXY_PORT : '8088' }
     - reports-setup.sh|idio|shint|pyg|h:
-        - shint: { add-new-files: True }
+        - shint: { add-new-files: True, timeout: 60 }
         - .py
         - .sql
         - .html
@@ -57,7 +67,7 @@ script:screenshots-h:
 script:screenshots-l:
     - storage: { DEXY_PORT : '8087' }
     - reports-setup.sh|idio|shint|pyg|l:
-        - shint: { add-new-files: True }
+        - shint: { add-new-files: True, timeout: 60 }
         - .py
         - .sql
         - .html

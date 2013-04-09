@@ -34,6 +34,10 @@ The results include HTML and can be viewed as a web server:
 
 {{ codes('reports-setup.sh|idio|shint|pyg', 'start-server') }}
 
+We take screenshots:
+
+{{ code('screenshots.js|pyg') }}
+
 Later we stop the server:
 
 {{ codes('reports-teardown.sh|idio|shint|pyg', 'kill') }}

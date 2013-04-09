@@ -11,6 +11,7 @@ dexy setup
 dexy
 
 ### @export "start-server"
+echo $DEXY_PORT
 nohup dexy serve -port $DEXY_PORT &
 echo $! > pidfile
 sleep 2
