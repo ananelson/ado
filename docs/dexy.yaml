@@ -28,11 +28,9 @@ content-deps:
     - .jinja
     - packages.txt|pydoc:
         - contents: 'ado'
-    - .sh|idio|shint|pyg|l:
-        - except: "install"
+    - examples.sh|idio|shint|pyg|l:
         - shint: { 'term' : 'vt100' }
-    - .sh|idio|shint|pyg|h:
-        - except: "install"
+    - examples.sh|idio|shint|pyg|h:
         - shint: { 'term' : 'vt100' }
     - .sh|pyg|l
     - .sh|pyg|h
@@ -42,3 +40,28 @@ content-deps:
     - .rst|pyg|h
     - .jinja|pyg|l
     - .jinja|pyg|h
+    - script:screenshots-h
+    - script:screenshots-l
+
+script:screenshots-h:
+    - storage: { DEXY_PORT : '8088' }
+    - reports-setup.sh|idio|shint|pyg|h:
+        - shint: { add-new-files: True }
+        - .py
+        - .sql
+        - .html
+    - screenshots.js|casperjs:
+        - casperjs: { add-new-files: True }
+    - reports-teardown.sh|idio|shint|pyg|h
+
+script:screenshots-l:
+    - storage: { DEXY_PORT : '8087' }
+    - reports-setup.sh|idio|shint|pyg|l:
+        - shint: { add-new-files: True }
+        - .py
+        - .sql
+        - .html
+    - screenshots.js|casperjs:
+        - casperjs: { add-new-files: True }
+    - reports-teardown.sh|idio|shint|pyg|l
+

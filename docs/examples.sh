@@ -86,3 +86,14 @@ echo "plugins: 'ado.dexy_plugins'" > dexy.conf
 
 ### @export "dexy templates"
 dexy templates | grep ado
+
+### @export "dexy version"
+dexy version
+
+### @export "gen"
+dexy gen -t adoreport -d myado
+
+### @export "run"
+cd myado
+ls
+dexy

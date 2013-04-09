@@ -6,7 +6,6 @@ Installation
 .. contents:: Contents
     :local:
 
-
 Installing Ado
 --------------
 
