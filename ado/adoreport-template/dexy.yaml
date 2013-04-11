@@ -1,6 +1,7 @@
 docs:
     - docs.md|adojinja|markdown:
-        - examples.sh|idio|shint|pyg
+        - examples.sh|idio|shint|pyg:
+            - shint: { timeout: 60 }
     - report.tex|adojinja|latex
 
 report:
