@@ -6,6 +6,7 @@ setup(
         author='Ana Nelson',
         packages=find_packages(),
         version=ADO_VERSION,
+        include_package_data = True,
         install_requires = [
             'python-modargs>=1.7',
             'Markdown', # for reports
