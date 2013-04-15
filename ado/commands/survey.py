@@ -3,6 +3,8 @@ from ado.survey_data import SurveyData
 from datetime import datetime
 import ado.commands
 import sys
+from ado.metric import Metric
+from ado.metric_data import MetricData
 
 def take_survey(s):
     c = ado.commands.conn()
@@ -41,7 +43,7 @@ def create_survey(name, frequency, description):
 def survey_command(
         s=-1,
         name=False,
-        frequency=1,
+        frequency='1d',
         description=""
         ):
     """
@@ -52,3 +54,52 @@ def survey_command(
     else:
         create_survey(name, frequency, description)
 
+
+def record_metric(m):
+    c = ado.commands.conn()
+    if m < 0:
+        Metric.printall(c)
+        raw_m = ado.commands.clean_input("Choose a metric number: ")
+        if raw_m:
+            m = int(raw_m)
+        else:
+            sys.stderr.write("No metric chosen.\n")
+            sys.exit(1)
+
+    metric = Metric.get(c, m)
+    print "Record Metric %s) %s" % (metric.id, metric.name)
+    print metric.description
+    value = float(ado.commands.clean_input("> "))
+
+    md = MetricData.create(
+            c,
+            metric_id=m,
+            value=value,
+            created_at = datetime.now()
+            )
+    print md.display_line()
+
+def create_metric(name, frequency, description):
+    c = ado.commands.conn()
+    metric = Metric.create(
+            c,
+            name=name,
+            frequency=frequency,
+            description=description,
+            created_at = datetime.now()
+            )
+    print metric.id
+
+def metric_command(
+        m=-1,
+        name=False,
+        frequency='1d',
+        description=''
+        ):
+    """
+    Define a new metric, or take a metric.
+    """
+    if not name:
+        record_metric(m)
+    else:
+        create_metric(name, frequency, description)

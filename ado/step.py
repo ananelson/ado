@@ -21,6 +21,10 @@ class DoingRecipe(ado.model.Model):
         "recipe_id" : "integer",
         }
 
+    def display_line(self):
+        args = (self.__class__.__name__, self.id, self.recipe().name, self.started_at.strftime("%d %b %Y %H:%M"))
+        return "%s %4d) %s [%s]" % args
+
     def steps(self, conn=None):
         if not conn:
             conn = self.conn

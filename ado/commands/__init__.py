@@ -28,6 +28,7 @@ from ado.commands.recipe import do_command
 from ado.commands.status import ok_command
 from ado.commands.status import due_command
 from ado.commands.survey import survey_command
+from ado.commands.survey import metric_command
 
 # Anything in settings can be overridden by defining a corresponding
 # environment variable. e.g. defining setting('ado-dir') in the environment will override
@@ -628,34 +629,6 @@ def portfolios_command():
 
     for portfolio in portfolios:
         print portfolio.display_line()
-
-def metric_command(
-        name=False,
-        value=False,
-        m=False,
-        description=""
-        ):
-    """
-    Define a new metric, or save value for a single metric.
-    """
-    c = conn()
-    if value is not False:
-        assert m
-        MetricData.create(
-                c,
-                metric_id=m,
-                value=value,
-                created_at = datetime.now()
-                )
-        print "stored data %s for %s" % (value, m)
-    else:
-        metric = Metric.create(
-                c,
-                name=name,
-                description=description,
-                crated_at = datetime.now()
-                )
-        print metric.id,
 
 def ts_command(
         m=-1 # The metric id to print data for.

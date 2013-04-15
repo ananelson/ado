@@ -81,10 +81,10 @@ def recipe_command():
     print "How often should you do this recipe (e.g. 1w (1 week), 1d (1 day), 12h (12 hours), 30m (30 minutes)"
     raw_frequency = ado.commands.clean_input("> ")
     if raw_frequency:
-        frequency = int(raw_frequency)
+        frequency = raw_frequency
         print "This recipe should be done every %s days" % frequency
     else:
-        frequency = -1
+        frequency = "None"
         print "No specified frequency."
 
     context = ado.commands.clean_input("Context (where you can do this): ")

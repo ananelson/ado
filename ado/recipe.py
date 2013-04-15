@@ -30,7 +30,7 @@ class Recipe(Model):
         if not conn:
             conn = self.conn
 
-        sql = "select * from %s where recipe_id = %s ORDER BY created_at DESC LIMIT 1"
+        sql = "select * from %s where recipe_id = %s ORDER BY started_at DESC LIMIT 1"
         rows = conn.execute(sql % (DoingRecipe.table_name(), self.id))
         row = rows.fetchone()
         if row:

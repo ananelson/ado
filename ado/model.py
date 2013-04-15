@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 import sqlite3
 
 class Model(object):
@@ -89,14 +89,19 @@ class Model(object):
         if not conn:
             conn = self.conn
 
-        if self.frequency < 0:
+        if self.frequency == 'None':
             # No frequency specified, so it cannot be due.
             return False
 
         latest = self.latest()
 
         if latest:
-            return (datetime.datetime.now() - latest.created_at) > self.frequency_delta()
+            if hasattr(latest, 'created_at'):
+                return (datetime.datetime.now() - latest.created_at) > self.frequency_delta()
+            elif hasattr(latest, 'started_at'):
+                return (datetime.datetime.now() - latest.started_at) > self.frequency_delta()
+            else:
+                raise Exception("Don't know how to calculate is_due for '%s'" % latest.__class__)
         else:
             return True
 
@@ -224,7 +229,7 @@ class Model(object):
         """
         For classes with a created_at attribute, returns the time elapsed since creation.
         """
-        return datetime.now() - self.created_at
+        return datetime.datetime.now() - self.created_at
 
     def elapsed_seconds(self):
         return self.elapsed().total_seconds()
@@ -255,7 +260,7 @@ class Model(object):
         """
         Archive this item so it no longer shows up in search results.
         """
-        now = datetime.now()
+        now = datetime.datetime.now()
         klass.update(conn, rowid, { 'archived_at' : now })
 
     def validate_complete(self, conn):
@@ -264,10 +269,10 @@ class Model(object):
     def complete(self, conn):
         if not self.validate_complete(conn):
             raise Exception("This item can't be marked as completed.")
-        now = datetime.now()
+        now = datetime.datetime.now()
         self.update(conn, self.id, { 'completed_at' : now })
         # Also archive this.
         self.archive(conn, self.id)
 
     def days_until_due(self):
-        return round((self.due_at - datetime.now()).total_seconds() / (60*60*24))
+        return round((self.due_at - datetime.datetime.now()).total_seconds() / (60*60*24))

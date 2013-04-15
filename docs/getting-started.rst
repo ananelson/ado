@@ -31,6 +31,11 @@ and creates the tables in the database:
 You can check that this has worked by using the `sqlite3` command directly:
 {{ codes('examples.sh|idio|shint|pyg', 'sqlite-dump') }}
 
+The `ado dump` command lets you dump your data to SQL format, this is useful as
+a plain text backup or to help you migrate if the database scheme changes.
+
+{{ codes('examples.sh|idio|shint|pyg', 'reset-db') }}
+
 To manage your todo items, you can create notes, tasks and projects.
 
 Notes

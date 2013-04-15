@@ -1,4 +1,7 @@
+[feature] validate 'frequency' entries, also test all formats | id:06b09cd2e17acd9edd71781f4622e8c445a8ced4
 Implement support for subprojects in d3 output | id:195920bf4e57c34547d4071fa541381d9a4e8dc2
 [feature] for recipe command, allow ending a line with a character to indicate you want to have more than 1 line of comment | id:746e55a6233d8e2e226701e6bda5c2d7c9d87a70
 [feature] Create a daily report showing all recipes run that day and total time worked. | id:afd9f1fd131096e763d5d85de45b7a07a1c144ef
+[feature] make an 'ado backup' command which stores .tgz of ado dump output in a backups/ dir | id:c9fd43eb40b58f8a85bf56eb4f4d653cd0bde793
+[feature] add .tgz option to 'ado dump' | id:e2a484f766736dc62f2676bfa8c784b478588c58
 [feature] Create a 'recipe' report showing the history of doing the recipe, average time taken to complete each step, places where steps have been modified. | id:e2aeec416855dcc1a75c63b8b44ca2e56f1a2981

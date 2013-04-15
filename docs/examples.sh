@@ -72,6 +72,13 @@ ado show -t 3
 ### @export "inbox"
 ado inbox
 
+### @export "reset-db"
+ado dump > backup.sql
+head -n 3 backup.sql
+rm $ADO_DB_FILE
+ado setup
+sqlite3 $ADO_DB_FILE < backup.sql
+
 ### @export "version"
 ado version
 
