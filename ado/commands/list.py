@@ -7,12 +7,18 @@ def list_command(**kwargs):
     if not kwargs:
         # print help
         print "Valid flags are:"
+        print "  -all\t(for all objects)"
         for k, v in ado.commands.classes.iteritems():
             print "  -%s\t(for %s)" % (k, v.__name__)
     else:
         # print all the things
         c = ado.commands.conn()
-        [ado.commands.abbrev(k).printall(c) for k, v in kwargs.iteritems() if v]
+        if "all" in kwargs:
+            classes = ado.commands.classes.values()
+            for klass in classes:
+                [klass.printall(c) for k, v in kwargs.iteritems() if v]
+        else:
+            [ado.commands.abbrev(k).printall(c) for k, v in kwargs.iteritems() if v]
 
 def search_command(query=None):
     """
