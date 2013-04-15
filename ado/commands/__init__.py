@@ -660,35 +660,3 @@ def values_command(
             print row['created_at']
             print row['value']
             print ''
-
-def metrics_command(
-       l=False # Whether to just list all available metrics.
-        ):
-    """
-    Run through all metrics and gather data from responses.
-    """
-    c = conn()
-    metrics = Metric.all(c)
-    if len(metrics) == 0:
-        print "No metrics found, define some first with 'ado metric'"
-    elif l:
-        for metric in metrics:
-            print "%s) %s: %s" % (metric.id, metric.name, metric.description)
-    else:
-        for metric in metrics:
-            try:
-                print metric.id, ' ',
-                if metric.description:
-                    value = raw_input(metric.description + "\n")
-                else:
-                    value = raw_input(metric.name + ": ")
-
-                if len(value) > 0:
-                    MetricData.create(
-                            c,
-                            metric_id = metric.id,
-                            value=value,
-                            created_at = datetime.now()
-                            )
-            except KeyboardInterrupt:
-                print "quitting"

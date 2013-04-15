@@ -55,7 +55,7 @@ def survey_command(
         create_survey(name, frequency, description)
 
 
-def record_metric(m):
+def record_metric(m, value):
     c = ado.commands.conn()
     if m < 0:
         Metric.printall(c)
@@ -66,10 +66,11 @@ def record_metric(m):
             sys.stderr.write("No metric chosen.\n")
             sys.exit(1)
 
-    metric = Metric.get(c, m)
-    print "Record Metric %s) %s" % (metric.id, metric.name)
-    print metric.description
-    value = float(ado.commands.clean_input("> "))
+    if value == "None":
+        metric = Metric.get(c, m)
+        print "Record Metric %s) %s" % (metric.id, metric.name)
+        print metric.description
+        value = float(ado.commands.clean_input("> "))
 
     md = MetricData.create(
             c,
@@ -94,12 +95,13 @@ def metric_command(
         m=-1,
         name=False,
         frequency='1d',
-        description=''
+        description='',
+        value="None"
         ):
     """
     Define a new metric, or take a metric.
     """
     if not name:
-        record_metric(m)
+        record_metric(m, value)
     else:
         create_metric(name, frequency, description)
