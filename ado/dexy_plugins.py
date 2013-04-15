@@ -6,6 +6,7 @@ from ado.recipe import Recipe
 from ado.portfolio import Portfolio
 from ado.project import Project
 from ado.task import Task
+from ado.step import DoingRecipe
 import dexy.filters.templating
 
 class AdoFilter(dexy.filters.templating.JinjaFilter):
@@ -13,6 +14,9 @@ class AdoFilter(dexy.filters.templating.JinjaFilter):
     A jinja filter with information from ado content.
     """
     aliases = ['adojinja']
+
+    def doings(self):
+        return DoingRecipe.all(conn())
 
     def projects(self):
         return Project.all_nested_subprojects(conn())

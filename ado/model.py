@@ -3,6 +3,21 @@ import sqlite3
 
 class Model(object):
     FIELDS = {}
+    SEARCH_FIELDS = None
+
+    @classmethod
+    def printall(klass, conn, by=None):
+        for obj in klass.all(conn, by):
+            print obj.display_line()
+
+    @classmethod
+    def all_due(klass, conn):
+        all_due = []
+        for obj in klass.all(conn):
+            if hasattr(obj, 'is_due'):
+                if obj.is_due():
+                    all_due.append(obj)
+        return all_due
 
     @classmethod
     def all(klass, conn, by=None):
@@ -31,9 +46,14 @@ class Model(object):
                 raise Exception("No field found for %s" % by)
             order_by = " ORDER BY %s" % by
 
-        search_fields = " OR ".join("%s like ?" % f for f in klass.SEARCH_FIELDS)
-        sql = "SELECT * from %s WHERE (%s) and archived_at is null%s" % (klass.table_name(), search_fields, order_by)
-        return [klass.load(conn, row) for row in conn.execute(sql, ["%%%s%%" % search]*len(klass.SEARCH_FIELDS))]
+        if klass.SEARCH_FIELDS:
+            search_fields = " OR ".join("%s like ?" % f for f in klass.SEARCH_FIELDS)
+            sql = "SELECT * from %s WHERE (%s) and archived_at is null%s"
+            sqlargs = (klass.table_name(), search_fields, order_by)
+            rows = conn.execute(sql%sqlargs, ["%%%s%%" % search]*len(klass.SEARCH_FIELDS))
+            return [klass.load(conn, row) for row in rows]
+        else:
+            return []
 
     @classmethod
     def get(klass, conn, rowid):
@@ -61,7 +81,14 @@ class Model(object):
     def keys(klass):
         return sorted(klass.FIELDS)
 
-    def validate(self): return True
+    def display_line(self):
+        if hasattr(self, 'name'):
+            return "%s %4d) %s" % (self.__class__.__name__, self.id, self.name)
+        else:
+            return "%s %4d" % (self.__class__.__name__, self.id)
+
+    def validate(self):
+        return True
 
     def reload(self, conn):
         return self.get(conn, self.id)
@@ -92,7 +119,7 @@ class Model(object):
             "fields" : keys_list,
             "quote_values" : quote_values_list
         }
-        sql = "SELECT 'INSERT INTO %(table_name)s (%(fields)s) VALUES (%(quote_values)s)' from %(table_name)s" % args
+        sql = "SELECT 'INSERT INTO %(table_name)s (%(fields)s) VALUES (%(quote_values)s)' from %(table_name)s;" % args
         return sql
 
     @classmethod

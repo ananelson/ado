@@ -1,5 +1,6 @@
 from ado.model import Model
 from ado.task import Task
+from ado.step import Step
 
 class Recipe(Model):
     FIELDS = {
@@ -13,12 +14,13 @@ class Recipe(Model):
         "recipe" : "text" # The actual instructions for how to perform this recipe.
         }
 
-    def tasks(self, conn=None):
+    def steps(self, conn=None):
         if not conn:
             conn = self.conn
 
-        sql = "select * from %s where recipe_id = %s" % (Task.table_name(), self.id)
-        return [Task.load(conn, row) for row in conn.execute(sql)]
+        sql = "select * from %s where recipe_id = %s ORDER BY created_at"
+        rows = conn.execute(sql % (Step.table_name(), self.id))
+        return [Step.load(conn, row) for row in rows]
 
     def last_completed_task(self, conn=None):
         if not conn:

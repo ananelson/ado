@@ -2,7 +2,7 @@ from ado.model import Model
 from ado.metric import Metric
 from ado.commands import db_filepath
 
-conn = Model.setup_db(db_filepath())
+conn = Model.setup_db(db_filepath)
 
 with open("metric-data.txt", "w") as f:
     f.write("datetime\tmetric\tvalue\n")

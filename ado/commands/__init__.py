@@ -5,6 +5,9 @@ from ado.note import Note
 from ado.portfolio import Portfolio
 from ado.project import Project
 from ado.recipe import Recipe
+from ado.step import Step
+from ado.step import DoingRecipe
+from ado.step import DoingStep
 from ado.survey import Survey
 from ado.survey_data import SurveyData
 from ado.task import Task
@@ -16,55 +19,109 @@ import os
 import re
 import shutil
 import sys
+import sqlite3
 
-ADO_DB_FILE = "ado.sqlite3"
-ADO_DIR = os.path.expanduser("~/.ado")
-CLASSES = [Portfolio, Project, Task, Note, Timer, Recipe, Metric, MetricData, Survey, SurveyData]
-DEFAULT_COMMAND = 'projects'
+from ado.commands.list import list_command
+from ado.commands.list import search_command
+from ado.commands.recipe import recipe_command
+from ado.commands.recipe import do_command
+from ado.commands.status import ok_command
+from ado.commands.status import due_command
+from ado.commands.survey import survey_command
+
+# Anything in settings can be overridden by defining a corresponding
+# environment variable. e.g. defining setting('ado-dir') in the environment will override
+# the 'ado-dir' entry in settings dict.
+settings = {
+        'ado-db-file' : 'ado.sqlite3',
+        'ado-dir' : os.path.expanduser("~/.ado"),
+        'default-command' : 'projects',
+        'enforce-worktypes' : True,
+        'enforce-context' : False,
+        'worktypes' : ['adhoc', 'billable', 'capital', 'maintenance']
+        }
+
+# Timer class ?
+classes = {
+        'n' : Note,
+        't' : Task,
+        'p' : Project,
+        'f' : Portfolio,
+        'r' : Recipe,
+        's' : Step,
+        'm' : Metric,
+        'md' : MetricData,
+        'v' : Survey,
+        'vd' : SurveyData,
+        'dr' : DoingRecipe,
+        'ds' : DoingStep
+        }
+
+def clean(raw):
+    return "".join(i for i in raw if ord(i) < 128)
+
+def clean_input(prompt):
+    return clean(raw_input(prompt))
+
+def const_key(key):
+    """
+    Replaces ado-dir with setting('ado-dir'), used for converting settings dict entries to
+    environment variable style.
+    """
+    return key.replace("-", "_").upper()
+
+def setting(key):
+    """
+    Fetches the value of a setting by first looking in system environment, then
+    falling back to default specified in 'settings'.
+    """
+    return os.environ.get(const_key(key), settings[key])
+
+# constants
 MOD = sys.modules[__name__]
 PROG = 'ado'
-ENFORCE_WORKTYPES = True # set to false if you don't care about worktypes/recipes
-WORKTYPES = [
-    "adhoc",
-    "billable",
-    "capital",
-    "maintenance"
-    ]
 
-def available_commands():
-    return args.available_commands(MOD)
+# database
+db_filepath = os.path.join(setting('ado-dir'), setting('ado-db-file'))
 
-def version_command():
-    print ADO_VERSION
+def conn():
+    return Model.setup_db(db_filepath)
+
+# python modargs
+def run():
+    args.parse_and_run_command(sys.argv[1:], MOD, default_command=setting('default-command'))
 
 def help_command(on=False):
     """
     Prints this help.
     """
-    args.help_command(PROG, MOD, DEFAULT_COMMAND, on)
+    args.help_command(PROG, MOD, setting('default-command'), on)
 
 def help_text(on=False):
-    return args.help_text(PROG, MOD, DEFAULT_COMMAND, on)
+    return args.help_text(PROG, MOD, setting('default-command'), on)
 
-def run():
-    args.parse_and_run_command(sys.argv[1:], MOD, default_command=DEFAULT_COMMAND)
+def available_commands():
+    return args.available_commands(MOD)
 
-def db_filepath():
-    if os.environ.has_key('ADO_DIR'):
-        ado_dir = os.environ['ADO_DIR']
-    else:
-        ado_dir = ADO_DIR
+def abbrev(ab):
+    """
+    Returns the class corresponding to the abbreviation. Prints an error
+    message and exits if not valid.
+    """
+    if not ab in classes:
+        valid_abbrevs = ", ".join("%s (for %s)" % (k, v.__name__) for k, v in classes.items())
+        sys.stderr.write("You passed '%s', should be one of %s.\n" % (ab, valid_abbrevs))
+        sys.exit(1)
+    return classes[ab]
 
-    if os.environ.has_key("ADO_DB_FILE"):
-        ado_db_file = os.environ['ADO_DB_FILE']
-    else:
-        ado_db_file = ADO_DB_FILE
+# commands
+def version_command():
+    """
+    Prints the version of ado which is running.
+    """
+    print "Ado %s" % ADO_VERSION
 
-    return os.path.join(ado_dir, ado_db_file)
-
-def conn():
-    return Model.setup_db(db_filepath())
-
+# old commands
 def blotter_command():
     """
     Starts a timer. Records everything written to STDIN. Stops timer when
@@ -149,26 +206,6 @@ def note_command(
         n.assign(c, task)
         print "Assigned to task %s" % t
 
-def search_command(search=None):
-    """
-    Lists all items which meet the search criteria.
-    """
-    c = conn()
-
-    # Search for notes.
-    notes = Note.search(c, search)
-    for note in notes:
-        print note.display_line()
-
-    # Search for projects.
-    projects = Project.search(c, search)
-    for project in projects:
-        print project.display_line()
-
-    # Search for tasks.
-    tasks = Task.search(c, search)
-    for task in tasks:
-        print task.display_line()
 
 def inbox_command():
     """
@@ -178,14 +215,10 @@ def inbox_command():
     notes = Note.inbox(c)
     for note in notes:
         print note.display_line()
-    if len(notes) == 0:
-        print "No notes in the inbox!"
 
     tasks = Task.inbox(c)
     for task in tasks:
         print task.display_line()
-    if len(tasks) == 0:
-        print "No tasks in the inbox!"
 
 def notes_command():
     """
@@ -310,10 +343,10 @@ def task_command(
     if estimate < 0:
         estimate = None
 
-    if ENFORCE_WORKTYPES and not worktype in WORKTYPES:
-        raise Exception("Acceptable worktypes are %s" % ", ".join(WORKTYPES))
+    if setting('enforce-worktypes') and not worktype in setting('worktypes'):
+        raise Exception("Acceptable worktypes are %s" % ", ".join(setting('worktypes')))
 
-    if ENFORCE_WORKTYPES and worktype == "maintenance" and r < 0:
+    if setting('enforce-worktypes') and worktype == "maintenance" and r < 0:
         raise Exception("You must specify a recipe in order to designate a task as 'maintenance'")
 
     if waiting > 0:
@@ -351,39 +384,6 @@ def task_command(
         completed_at = completed_at
     )
     print "Created task", task.id
-
-def recipes_command():
-    c = conn()
-    recipes = Recipe.all(c)
-
-    for recipe in recipes:
-        print recipe.display_line()
-
-def recipe_command(
-        context=None, # context for this recipe
-        description="", # optional description of this recipe
-        frequency=-1, # how often this recipe should be done (in days)
-        name=None, # Name  of this recipe
-        p=None, # portfolio id
-        recipe=None # The instructions for how to perform this recipe.
-        ):
-    """
-    Create a new recipe.
-    """
-    if frequency < 0:
-        frequency = None
-
-    c = conn()
-    recipe = Recipe.create(
-            c,
-            context=context,
-            description=description,
-            frequency=frequency,
-            name=name,
-            portfolio_id=p,
-            recipe=recipe
-            )
-    print "Created recipe", recipe.id
 
 def tasks_command(by="id", search=-1):
     """
@@ -430,18 +430,19 @@ def setup_command():
     """
     Run this command to initialize all database tables. Can be run multiple times safely.
     """
-    if not os.path.exists(ADO_DIR):
-        print "Creating directory", ADO_DIR
-        os.mkdir(ADO_DIR)
+    ado_dir = setting('ado-dir')
+    if not os.path.exists(ado_dir):
+        print "Creating directory", ado_dir
+        os.mkdir(ado_dir)
 
     c = conn()
-    Model.setup_tables(c, CLASSES)
+    Model.setup_tables(c, classes.values())
 
 def reset_command():
     """
     Deletes user dir and recreates database tables. DESTROYS ALL YOUR DATA!
     """
-    shutil.rmtree(ADO_DIR)
+    shutil.rmtree(setting('ado-dir'))
     setup_command()
 
 def completion_command():
@@ -455,11 +456,14 @@ def dump_command():
     Dumps your data to console in sqlite format (data only, not structure, so you can preserve data while resetting your db schema).
     """
     c = conn()
-    for klass in CLASSES:
+    for klass in classes.values():
         sql = klass.insert_instance_sql()
-        rows = c.execute(sql)
-        for row in rows:
-            print row[0]
+        try:
+            rows = c.execute(sql)
+            for row in rows:
+                print row[0]
+        except sqlite3.OperationalError as e:
+            print "-- %s %s" % (klass.__name__, str(e))
 
 def load_command(filename=None):
     """
@@ -626,61 +630,42 @@ def portfolios_command():
         print portfolio.display_line()
 
 def metric_command(
-        name=None,
+        name=False,
+        value=False,
+        m=False,
         description=""
         ):
     """
-    Define a new metric.
+    Define a new metric, or save value for a single metric.
     """
     c = conn()
-    metric = Metric.create(
-            c,
-            name=name,
-            description=description,
-            crated_at = datetime.now()
-            )
-    print metric.id,
-
-def survey_command(
-        name=None,
-        description=""
-        ):
-    """
-    Define a new survey.
-    """
-    c = conn()
-    survey = Survey.create(
-            c,
-            name=name,
-            description=description,
-            crated_at = datetime.now()
-            )
-    print survey.id,
-
-def record_command(
-        m=-1,
-        s=-1,
-        value=None
-        ):
-    """
-    Record a data point for a metric or survey.
-    """
-    # TODO be able to specify custom date/time
-    c = conn()
-    if m > 0:
+    if value is not False:
+        assert m
         MetricData.create(
                 c,
                 metric_id=m,
                 value=value,
                 created_at = datetime.now()
                 )
-    elif s > 0:
-        SurveyData.create(
+        print "stored data %s for %s" % (value, m)
+    else:
+        metric = Metric.create(
                 c,
-                survey_id=s,
-                value=value,
-                created_at = datetime.now()
+                name=name,
+                description=description,
+                crated_at = datetime.now()
                 )
+        print metric.id,
+
+def ts_command(
+        m=-1 # The metric id to print data for.
+        ):
+    c = conn()
+    if m > 0:
+        metric = Metric.get(c, m)
+        datetimes, values = metric.ts(c)
+        for i, value in enumerate(values):
+            print "%s: %s" % (datetimes[i], value)
 
 def values_command(
         m=-1, # The metric id to print data for.
@@ -703,7 +688,9 @@ def values_command(
             print row['value']
             print ''
 
-def metrics_command():
+def metrics_command(
+       l=False # Whether to just list all available metrics.
+        ):
     """
     Run through all metrics and gather data from responses.
     """
@@ -711,6 +698,9 @@ def metrics_command():
     metrics = Metric.all(c)
     if len(metrics) == 0:
         print "No metrics found, define some first with 'ado metric'"
+    elif l:
+        for metric in metrics:
+            print "%s) %s: %s" % (metric.id, metric.name, metric.description)
     else:
         for metric in metrics:
             try:
@@ -727,45 +717,5 @@ def metrics_command():
                             value=value,
                             created_at = datetime.now()
                             )
-            except KeyboardInterrupt:
-                print "quitting"
-
-
-def surveys_command():
-    """
-    Run through all surveys and gather data from responses.
-
-    Can enter multiple line responses, will quit when blank line is reached.
-    """
-    c = conn()
-    surveys = Survey.all(c)
-    if len(surveys) == 0:
-        print "No surveys found, define some first with 'ado survey'"
-    else:
-        for survey in surveys:
-            try:
-                print survey.id, ' ',
-                if survey.description:
-                    print "%s\n" % survey.description
-                else:
-                    print "%s:\n" % survey.name
-    
-                value = []
-                while True:
-                    line = raw_input()
-                    if len(line) > 0:
-                        value.append(line)
-                    else:
-                        break
-                
-                if len(value) > 0:
-                    SurveyData.create(
-                            c,
-                            survey_id = survey.id,
-                            value="\n".join(value),
-                            created_at = datetime.now()
-                            )
-                else:
-                    print "nothing entered, not making a record"
             except KeyboardInterrupt:
                 print "quitting"

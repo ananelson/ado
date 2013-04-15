@@ -3,5 +3,5 @@ import ado.commands
 
 def get_conn():
     conn = Model.setup_db()
-    Model.setup_tables(conn, ado.commands.CLASSES)
+    Model.setup_tables(conn, ado.commands.classes.values())
     return conn
