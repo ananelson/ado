@@ -78,7 +78,8 @@ def recipe_command():
             print "done! %s steps recorded." % len(steps)
             break
 
-    raw_frequency = ado.commands.clean_input("How often should you do this recipe (in days): ")
+    print "How often should you do this recipe (e.g. 1w (1 week), 1d (1 day), 12h (12 hours), 30m (30 minutes)"
+    raw_frequency = ado.commands.clean_input("> ")
     if raw_frequency:
         frequency = int(raw_frequency)
         print "This recipe should be done every %s days" % frequency

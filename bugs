@@ -1,5 +1,4 @@
 Implement support for subprojects in d3 output | id:195920bf4e57c34547d4071fa541381d9a4e8dc2
-prompt for metrics/surveys at a set interval | id:1fbb9fd19f3a387a3271a9e6b4b64de19d9de6f9
 [feature] for recipe command, allow ending a line with a character to indicate you want to have more than 1 line of comment | id:746e55a6233d8e2e226701e6bda5c2d7c9d87a70
 [feature] Create a daily report showing all recipes run that day and total time worked. | id:afd9f1fd131096e763d5d85de45b7a07a1c144ef
 [feature] Create a 'recipe' report showing the history of doing the recipe, average time taken to complete each step, places where steps have been modified. | id:e2aeec416855dcc1a75c63b8b44ca2e56f1a2981

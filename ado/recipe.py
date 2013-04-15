@@ -1,6 +1,7 @@
 from ado.model import Model
 from ado.task import Task
 from ado.step import Step
+from ado.step import DoingRecipe
 
 class Recipe(Model):
     FIELDS = {
@@ -8,7 +9,7 @@ class Recipe(Model):
         "based_on" : "integer", # ID of recipe this recipe evolved from, if any
         "context" : "text",
         "description" : "text",
-        "frequency" : "integer", # how often this recipe should be done, measured in days
+        "frequency" : "text",
         "name" : "text",
         "portfolio_id" : "integer",
         "recipe" : "text" # The actual instructions for how to perform this recipe.
@@ -21,6 +22,19 @@ class Recipe(Model):
         sql = "select * from %s where recipe_id = %s ORDER BY created_at"
         rows = conn.execute(sql % (Step.table_name(), self.id))
         return [Step.load(conn, row) for row in rows]
+
+    def latest(self, conn=None):
+        """
+        Returns most recent DoingRecipe point available.
+        """
+        if not conn:
+            conn = self.conn
+
+        sql = "select * from %s where recipe_id = %s ORDER BY created_at DESC LIMIT 1"
+        rows = conn.execute(sql % (DoingRecipe.table_name(), self.id))
+        row = rows.fetchone()
+        if row:
+            return DoingRecipe.load(conn, row)
 
     def last_completed_task(self, conn=None):
         if not conn:

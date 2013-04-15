@@ -5,6 +5,7 @@ class Metric(ado.model.Model):
     FIELDS = {
         "archived_at" : "timestamp",
         "created_at" : "timestamp",
+        "frequency" : "text",
         "description" : "text",
         "name" : "text"
         }
@@ -20,7 +21,9 @@ class Metric(ado.model.Model):
 
         sql = "select * from %s where metric_id = %s ORDER BY created_at DESC LIMIT 1"
         rows = conn.execute(sql % (MetricData.table_name(), self.id))
-        return MetricData.load(conn, rows.fetchone())
+        row = rows.fetchone()
+        if row:
+            return MetricData.load(conn, row)
 
     def ts(self, conn=None):
         """

@@ -81,6 +81,44 @@ class Model(object):
     def keys(klass):
         return sorted(klass.FIELDS)
 
+    def is_due(self, conn=None):
+        if not conn:
+            conn = self.conn
+
+        if self.frequency < 0:
+            # No frequency specified, so it cannot be due.
+            return False
+
+        latest = self.latest()
+
+        if latest:
+            return (datetime.datetime.now() - latest.created_at) > self.frequency_delta()
+        else:
+            return True
+
+    def frequency_delta(self):
+        """
+        Returns a timedelta object for the specified frequency.
+        """
+        if "m" in self.frequency:
+            minutes = int(self.frequency.replace("m", ""))
+            return datetime.timedelta(minutes=minutes)
+        elif "h" in self.frequency:
+            hours = int(self.frequency.replace("h", ""))
+            return datetime.timedelta(hours=hours)
+        elif "w" in self.frequency:
+            weeks = int(self.frequency.replace("w", ""))
+            return datetime.timedelta(weeks=weeks)
+        elif "d" in self.frequency:
+            days = int(self.frequency.replace("d", ""))
+            return datetime.timedelta(days=days)
+        else:
+            try:
+                days = int(self.frequency)
+                return datetime.timedelta(days=days)
+            except ValueError:
+                raise Exception("Invalid frequency '%s'" % self.frequency)
+
     def display_line(self):
         if hasattr(self, 'name'):
             return "%s %4d) %s" % (self.__class__.__name__, self.id, self.name)
