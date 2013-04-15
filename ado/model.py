@@ -29,7 +29,11 @@ class Model(object):
             if not by in klass.FIELDS.keys():
                 raise Exception("No field found for %s" % by)
             order_by = " ORDER BY %s" % by
-        sql = "SELECT * from %s WHERE archived_at is null%s" % (klass.table_name(), order_by)
+
+        if "archived_at" in klass.FIELDS:
+            sql = "SELECT * from %s WHERE archived_at is null%s" % (klass.table_name(), order_by)
+        else:
+            sql = "SELECT * from %s%s" % (klass.table_name(), order_by)
         return [klass.load(conn, row) for row in conn.execute(sql)]
 
     @classmethod
@@ -157,7 +161,7 @@ class Model(object):
             "fields" : keys_list,
             "quote_values" : quote_values_list
         }
-        sql = "SELECT 'INSERT INTO %(table_name)s (%(fields)s) VALUES (%(quote_values)s)' from %(table_name)s;" % args
+        sql = "SELECT 'INSERT INTO %(table_name)s (%(fields)s) VALUES (%(quote_values)s);' from %(table_name)s" % args
         return sql
 
     @classmethod
