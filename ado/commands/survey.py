@@ -55,7 +55,7 @@ def survey_command(
         create_survey(name, frequency, description)
 
 
-def record_metric(m, value):
+def record_metric(m, value="None"):
     c = ado.commands.conn()
     if m < 0:
         Metric.printall(c)
